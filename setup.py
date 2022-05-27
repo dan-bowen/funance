@@ -19,8 +19,17 @@ setup(
         'pandas',
         'numpy',
         'requests',
-        'attrs'
+        'attrs',
+        'python-dateutil',
+        'PyYAML'
     ],
+    extras_require={
+        'dev': [
+            'nose2',
+            'parameterized',
+            'coverage'
+        ]
+    },
     entry_points='''
         [console_scripts]
         funance=funance.cli.__main__:cli

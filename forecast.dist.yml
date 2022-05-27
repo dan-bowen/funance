@@ -1,0 +1,178 @@
+accounts:
+  checking: # account_id: Unique ID to indentify the account.
+    type: checking   # str: one of: checking | savings | cc | invest
+    name: Checking   # str: Name of the account.
+    balance: 2043.15 # float: Current balance. May be positive or negative.
+    scheduled_transactions:
+      paycheck:
+        name: Paycheck
+        amount: 2500.00 # float: Always positive. debit/credit is determined internally by "type".
+        type: income    # str: income|expense|transfer
+        date_spec:                 # dict: Date spec. Defines date(s) for the transaction.
+          start_date: '2021-11-05' # str: YYYY-MM-DD formatted start date
+          end_date: null           # str|null: YYYY-MM-DD formatted end date, null for inifinite
+          frequency: weekly        # str: daily|weekly|monthly
+          interval: 2              # int: Interval to repeat
+          day_of_week: fri         # str|null: mon|tue|wed|thu|fri|sat|sun
+          day_of_month: null       # int|null: 1-31
+        transfer: null # dict|null: Transfer spec. Required when type: 'transfer', null otherwise.
+        #  direction: to       # str: to|from
+        #  account_id: savings # str: account_id for the transfer
+      rent:
+        name: Rent
+        amount: 1500
+        type: expense
+        date_spec:
+          start_date: '2022-01-28'
+          end_date: null
+          frequency: monthly
+          interval: 1
+          day_of_week: null
+          day_of_month: 1
+        transfer: null
+      cc_pmt:
+        name: Credit Card Pmt
+        amount:
+          cc_balance:
+            account_id: credit_card
+        type: transfer
+        date_spec:
+          start_date: '2021-11-01'
+          end_date: null
+          frequency: monthly
+          interval: 1
+          day_of_week: null
+          day_of_month: 1
+        transfer:
+          direction: to
+          account_id: credit_card
+      savings:
+        name: Savings
+        amount: 500.00
+        type: transfer
+        date_spec:
+          start_date: '2021-11-05'
+          end_date: null
+          frequency: weekly
+          interval: 2
+          day_of_week: fri
+          day_of_month: null
+        transfer:
+          direction: to
+          account_id: savings
+      retirement:
+        name: 401k
+        amount: 500.00
+        type: transfer
+        date_spec:
+          start_date: '2021-11-05'
+          end_date: null
+          frequency: weekly
+          interval: 2
+          day_of_week: fri
+          day_of_month: null
+        transfer:
+          direction: to
+          account_id: 401k
+  savings:
+    type: savings
+    name: Savings
+    balance: 2000.00
+    scheduled_transactions: null
+  credit_card:
+    type: cc
+    name: Credit Card
+    balance: -1650.32
+    stmt_balance: -300.15 # float: current statement balance (for cc type only)
+    stmt_close_dom: 4     # int: Statement closing day of month (for cc type only)
+    pmt_plan:             # dict|null: Indicates a payment plan(s) within this card
+      interest_saving_balance: -923.17 # float: Interest saving balance
+      ref_account_id: cc_plans         # string: reference to the account_id with payment plan balances
+    scheduled_transactions:
+      groc:
+        name: Groceries
+        amount: 750
+        type: expense
+        date_spec:
+          start_date: '2021-12-01'
+          end_date: null
+          frequency: monthly
+          interval: 1
+          day_of_week: null
+          day_of_month: 15
+        transfer: null
+      gas:
+        name: Gas
+        amount: 150
+        type: expense
+        date_spec:
+          start_date: '2021-12-01'
+          end_date: null
+          frequency: monthly
+          interval: 1
+          day_of_week: null
+          day_of_month: 15
+        transfer: null
+      slush:
+        name: Slush Fund
+        amount: 500
+        type: expense
+        date_spec:
+          start_date: '2021-12-01'
+          end_date: null
+          frequency: monthly
+          interval: 1
+          day_of_week: null
+          day_of_month: 15
+        transfer: null
+  cc_plans:
+    name: Payment Plans
+    type: loan
+    balance: -1500
+    scheduled_transactions:
+      car_maint:
+        name: 'Car maintenance'
+        amount: 250
+        type: income
+        date_spec:
+          start_date: '2022-06-04'
+          end_date: '2022-11-04'
+          frequency: monthly
+          interval: 1
+          day_of_week: null
+          day_of_month: 4
+        transfer: null
+  401k:
+    type: invest
+    name: 401k
+    balance: 3652.17
+    scheduled_transactions:
+      dividends:
+        name: Dividends
+        amount: 250.00
+        type: income
+        date_spec:
+          start_date: '2021-11-05'
+          end_date: null
+          frequency: monthly
+          interval: 1
+          day_of_week: null
+          day_of_month: 15
+        transfer: null
+chart_spec:
+  - name: Charts
+    type: line
+    account_ids:
+      - checking
+      - savings
+      - credit_card
+      - 401k
+      - cc_plans
+  - name: Raw Data
+    type: datatable
+    account_ids:
+      - checking
+      - savings
+      - credit_card
+      - 401k
+      - cc_plans
