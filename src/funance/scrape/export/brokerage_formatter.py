@@ -1,7 +1,7 @@
 import json
 import csv
 import os
-from funance.scrape.common import Paths
+from funance.common.paths import EXPORT_DIR
 
 
 class CsvFormatter:
@@ -10,7 +10,7 @@ class CsvFormatter:
 
     def format(self):
         filenames = [
-            f for f in os.listdir(Paths.EXPORT_DIR_BROKERAGE) if f.endswith('.json')
+            f for f in os.listdir(EXPORT_DIR) if f.endswith('.json')
         ]
         filenames.sort(reverse=True)
         print(f"[DEBUG] Found exported filenames: {filenames}")
@@ -20,14 +20,14 @@ class CsvFormatter:
             f for f in filenames if f.startswith(prefix)
         ]
         print(f"[DEBUG] Found matching filenames: {matching_filenames}")
-        exported_filename = f'{Paths.EXPORT_DIR_BROKERAGE}/{prefix}.csv'
+        exported_filename = f'{EXPORT_DIR}/{prefix}.csv'
         with open(exported_filename, mode='w') as csv_file:
             fieldnames = ['account_name', 'ticker', 'date_acquired', 'num_shares', 'cost_per_share', 'total_cost']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
             for filename in matching_filenames:
                 print(f'[DEBUG] Processing file {filename}')
-                with open(f"{Paths.EXPORT_DIR_BROKERAGE}/{filename}", "r") as src_file:
+                with open(f"{EXPORT_DIR}/{filename}", "r") as src_file:
                     data = json.load(src_file)
                     for a in data['accounts']:
                         for cb in a['cost_basis']:

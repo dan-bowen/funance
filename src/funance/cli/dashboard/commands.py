@@ -8,20 +8,15 @@ from dateutil.relativedelta import relativedelta
 from funance.dashboard.dash_app import create_app
 from funance.forecast.datespec import DATE_FORMAT
 from funance.forecast.projector import Projector
+from funance.common.paths import FORECAST_DIST_FILE, FORECAST_FILE
 
 
 def get_watch_files():
-    dir_path = os.getcwd()
-    dist_file = f"{dir_path}/forecast.dist.yml"
-    user_file = f"{dir_path}/forecast.yml"
-    return [dist_file, user_file]
+    return [FORECAST_DIST_FILE, FORECAST_FILE]
 
 
 def get_yaml():
-    dir_path = os.getcwd()
-    dist_file = f"{dir_path}/forecast.dist.yml"
-    user_file = f"{dir_path}/forecast.yml"
-    spec_file = user_file if os.path.exists(user_file) else dist_file
+    spec_file = FORECAST_FILE if os.path.exists(FORECAST_FILE) else FORECAST_DIST_FILE
     with open(spec_file, "r") as stream:
         return yaml.safe_load(stream)
 

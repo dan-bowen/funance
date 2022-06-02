@@ -1,6 +1,6 @@
 import os
 
-from funance.scrape.common import Paths
+from funance.common.paths import CHROMEDRIVER_DIR
 from funance.scrape.driver.session import Session
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException
@@ -85,7 +85,7 @@ def create_driver(session=False, detached=False):
 def get_chromedriver_executable(chromedriver_version):
     # TODO choose driver based on platform
     return os.path.join(
-        Paths.CHROMEDRIVER_DIR,
+        CHROMEDRIVER_DIR,
         chromedriver_version,
         'chromedriver_mac64',
         'chromedriver'
