@@ -2,6 +2,7 @@ import subprocess
 import time
 
 import click
+from selenium.common.exceptions import WebDriverException
 
 from funance.scrape.driver import create_driver
 from funance.scrape.driver.updater import do_update
