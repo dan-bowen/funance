@@ -238,7 +238,7 @@ class Tda:
     def _get_cost_basis_for_current_account(self):
         current_account = self._get_current_account()['account_name']
         logger.info(f'Getting cost basis for account: {current_account}')
-        
+
         # FIXME
         # For an unknown reason NoSuchWindowException is being thrown when selecting an element inside the frame
         # after clicking the tab. Also, the clicked tab is no longer a link or clickable since it is the active tab.

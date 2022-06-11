@@ -11,28 +11,27 @@ class TestBrokerageWriter(unittest.TestCase):
 
         account = dict(account_name='Freedom', cash='', cost_basis=[])
 
+        writer.set_cash('Freedom', '500.00')
+
         stock_ticker = dict(
             ticker='CRLBF',
             company_name='Cresco Labs',
             total_shares='73',
-            lots=[]
         )
         stock_lot = dict(
             date_acquired='12/27/2018',
             num_shares='16.0000',
             cost_per_share='39.21',
-            total_cost='627.32'
+            total_cost='627.32',
+            term='long'
         )
 
-        stock_ticker['lots'].append(stock_lot)
-        account['cost_basis'].append(stock_ticker)
-
-        writer.add_account(account)
+        writer.set_cost_basis('Freedom', stock_ticker, [stock_lot])
 
         expected = dict(
             _meta=dict(brokerage='vanguard', version='0.0.1'),
             accounts=[
-                dict(account_name='Freedom', cash='', cost_basis=[
+                dict(account_name='Freedom', cash='500.00', cost_basis=[
                     dict(
                         ticker='CRLBF',
                         company_name='Cresco Labs',
@@ -41,7 +40,8 @@ class TestBrokerageWriter(unittest.TestCase):
                             date_acquired='12/27/2018',
                             num_shares='16.0000',
                             cost_per_share='39.21',
-                            total_cost='627.32'
+                            total_cost='627.32',
+                            term='long'
                         )]
                     )
                 ])

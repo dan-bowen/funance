@@ -58,7 +58,7 @@ class BrokerageWriter:
         self.cost_basis = {}
         self.accounts = {}
 
-    def set_cash(self, account_name: str, cash: float):
+    def set_cash(self, account_name: str, cash: str):
         self.cash[account_name] = cash
 
     def set_cost_basis(self, account_name: str, ticker: dict, lots: list):
