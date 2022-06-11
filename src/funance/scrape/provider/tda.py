@@ -183,7 +183,7 @@ class Tda:
         cash = cash_row.find_elements_by_css_selector('td')[1].text
 
         current_account = self._get_current_account()['account_name']
-        self.cash[current_account] = cash.replace('$', '').replace(',', '')
+        self.writer.set_cash(current_account, cash.replace('$', '').replace(',', ''))
 
     def _visit_stock_lots(self):
         # Move to "My Account" element and click it
@@ -238,9 +238,7 @@ class Tda:
     def _get_cost_basis_for_current_account(self):
         current_account = self._get_current_account()['account_name']
         logger.info(f'Getting cost basis for account: {current_account}')
-
-        acct = dict(account_name=current_account, cash=self.cash[current_account], cost_basis=[])
-
+        
         # FIXME
         # For an unknown reason NoSuchWindowException is being thrown when selecting an element inside the frame
         # after clicking the tab. Also, the clicked tab is no longer a link or clickable since it is the active tab.
@@ -271,7 +269,6 @@ class Tda:
                 company_name=company_name,
                 ticker=ticker,
                 total_shares=num_shares,
-                lots=[]
             )
 
             # if the .showCell column has a link "opener" in it, then there are multiple lots
@@ -289,8 +286,9 @@ class Tda:
                     total_cost=total_cost,
                     term=term
                 )
-                ticker_data['lots'].append(single_lot_dict)
+                self.writer.set_cost_basis(current_account, ticker_data, [single_lot_dict])
             else:
+                lots = []
                 header_row_id = row.get_attribute('id')
                 lots_row_id = header_row_id.replace('SUM_', 'L_')
                 lots_rows = self.driver.find_elements_by_css_selector(f"#{lots_row_id} tr")
@@ -310,9 +308,8 @@ class Tda:
                         total_cost=total_cost,
                         term=term
                     )
-                    ticker_data['lots'].append(lots_dict)
-            acct['cost_basis'].append(ticker_data)
-        self.writer.add_account(acct)
+                    lots.append(lots_dict)
+                self.writer.set_cost_basis(current_account, ticker_data, lots)
 
         # switch driver back to default content
         self.driver.switch_to.default_content()

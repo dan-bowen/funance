@@ -54,19 +54,31 @@ class JsonSchema(Schema):
 class BrokerageWriter:
     def __init__(self, brokerage):
         self.brokerage = brokerage
-        self.accounts = []
+        self.cash = {}
+        self.cost_basis = {}
+        self.accounts = {}
 
-    def add_account(self, account):
-        self.accounts.append(account)
+    def set_cash(self, account_name: str, cash: float):
+        self.cash[account_name] = cash
+
+    def set_cost_basis(self, account_name: str, ticker: dict, lots: list):
+        ticker['lots'] = lots
+        self.cost_basis[account_name] = ticker
 
     def dump_schema(self):
+        for account_name, cash in self.cash.items():
+            self.accounts[account_name] = dict(account_name=account_name, cash=cash, cost_basis=[])
+
+        for account_name, ticker in self.cost_basis.items():
+            self.accounts[account_name]['cost_basis'].append(ticker)
+
         try:
             result = JsonSchema().load(dict(
                 _meta=dict(
                     version='0.0.1',
                     brokerage=self.brokerage
                 ),
-                accounts=self.accounts
+                accounts=[acct for acct in self.accounts.values()]
             ))
         except ValidationError as e:
             # print(err.messages)
