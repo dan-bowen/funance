@@ -29,7 +29,7 @@ class StockTickerSchema(Schema):
 class AccountSchema(Schema):
     account_name = fields.Str(required=True)
     cash = fields.Str()
-    cost_basis = fields.List(fields.Nested(StockTickerSchema), required=True)
+    cost_basis = fields.Dict(keys=fields.Str(required=True), values=fields.Nested(StockTickerSchema))
 
     class Meta:
         ordered = True
@@ -45,7 +45,7 @@ class MetaSchema(Schema):
 
 class JsonSchema(Schema):
     _meta = fields.Nested(MetaSchema)
-    accounts = fields.List(fields.Nested(AccountSchema), required=True)
+    accounts = fields.Dict(keys=fields.Str(required=True), values=fields.Nested(AccountSchema))
 
     class Meta:
         ordered = True
@@ -54,31 +54,30 @@ class JsonSchema(Schema):
 class BrokerageWriter:
     def __init__(self, brokerage):
         self.brokerage = brokerage
-        self.cash = {}
-        self.cost_basis = {}
         self.accounts = {}
 
-    def set_cash(self, account_name: str, cash: str):
-        self.cash[account_name] = cash
+    def set_account(self, account: dict):
+        self.accounts[account['account_name']] = account
+        self.accounts[account['account_name']]['cost_basis'] = {}
 
-    def set_cost_basis(self, account_name: str, ticker: dict, lots: list):
-        ticker['lots'] = lots
-        self.cost_basis[account_name] = ticker
+    def set_cash(self, account_name: str, cash: str):
+        self.accounts[account_name]['cash'] = cash
+
+    def set_ticker(self, account_name: str, ticker: dict):
+        self.accounts[account_name]['cost_basis'][ticker['ticker']] = ticker
+        self.accounts[account_name]['cost_basis'][ticker['ticker']]['lots'] = []
+
+    def add_cost_basis(self, account_name: str, ticker: str, stock_lot: dict):
+        self.accounts[account_name]['cost_basis'][ticker]['lots'].append(stock_lot)
 
     def dump_schema(self):
-        for account_name, cash in self.cash.items():
-            self.accounts[account_name] = dict(account_name=account_name, cash=cash, cost_basis=[])
-
-        for account_name, ticker in self.cost_basis.items():
-            self.accounts[account_name]['cost_basis'].append(ticker)
-
         try:
             result = JsonSchema().load(dict(
                 _meta=dict(
                     version='0.0.1',
                     brokerage=self.brokerage
                 ),
-                accounts=[acct for acct in self.accounts.values()]
+                accounts=self.accounts
             ))
         except ValidationError as e:
             # print(err.messages)

@@ -30,12 +30,13 @@ class CsvFormatter:
         with open(exported_filename, mode='w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=self.HEADERS)
             writer.writeheader()
+
             for filename in matching_filenames:
                 logger.info(f'Processing file {filename}')
                 with open(f"{EXPORT_DIR}/{filename}", "r") as src_file:
                     data = json.load(src_file)
-                    for a in data['accounts']:
-                        for cb in a['cost_basis']:
+                    for a in data['accounts'].values():
+                        for cb in a['cost_basis'].values():
                             for lot in cb['lots']:
                                 writer.writerow(dict(
                                     ticker=cb['ticker'],

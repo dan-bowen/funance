@@ -1,13 +1,15 @@
 import json
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, WebDriverException, TimeoutException, \
+from datetime import datetime
+
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, \
     NoSuchWindowException
-from funance.scrape.export import BrokerageWriter
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 from funance.common.logger import get_logger
+from funance.scrape.export import BrokerageWriter
 
 logger = get_logger('tda')
 
@@ -80,7 +82,6 @@ class Tda:
     def _get_account_switcher_data(self):
         account_switcher_select = self.driver.find_element_by_id('accountSwitcherSelectBox')
         dojo_props = account_switcher_select.get_attribute('data-dojo-props')
-        # print(dojo_props)
         """
         This data structure is almost JSON. With a little string manipulation this becomes JSON 
         and a useful data structure.
@@ -113,7 +114,6 @@ class Tda:
         dojo_props = dojo_props.replace('fromModule:', '"fromModule":')
         dojo_props = dojo_props.replace('tradePermissionChanged:', '"tradePermissionChanged":')
         dojo_json = json.loads(dojo_props)
-        # print(f'[DEBUG] Dojo JSON: {dojo_json}')
 
         accounts_map = dojo_json['accountsMap']
         active_account_id = accounts_map['active']
@@ -180,10 +180,26 @@ class Tda:
         )
         summary_rows = summary_table.find_elements_by_css_selector('tbody tr')
         cash_row = summary_rows[1]
-        cash = cash_row.find_elements_by_css_selector('td')[1].text
+        cash = cash_row.find_elements_by_css_selector('td')[1].text \
+            .replace('$', '') \
+            .replace(',', '')
 
         current_account = self._get_current_account()['account_name']
-        self.writer.set_cash(current_account, cash.replace('$', '').replace(',', ''))
+        self.writer.set_account(dict(account_name=current_account))
+        self.writer.set_cash(current_account, cash)
+
+        self.writer.set_ticker(current_account, dict(
+            ticker='X_CASH',
+            company_name='CASH',
+            total_shares=cash,
+        ))
+        self.writer.add_cost_basis(current_account, 'X_CASH', dict(
+            date_acquired=datetime.today().strftime('%Y-%m-%d'),
+            num_shares=cash,
+            cost_per_share='1.00',
+            total_cost=cash,
+            term='long'
+        ))
 
     def _visit_stock_lots(self):
         # Move to "My Account" element and click it
@@ -257,7 +273,11 @@ class Tda:
             # get summary data from the main row
             ticker = row.find_element_by_css_selector('td.Symbol').text
             company_name = row.find_element_by_css_selector('td.Security').text
+
             date_acquired = row.find_element_by_css_selector('td.OpenDate').text
+            # print(date_acquired)
+            # date_acquired = datetime.strptime(date_acquired, "%m/%d/%y").date().strftime('%Y-%m-%d')
+
             num_shares = row.find_element_by_css_selector('td.Quantity').text
             cost_per_share = row.find_element_by_css_selector('td.AmountPerShare').text
             total_cost = row.find_element_by_css_selector('td.Amount').text
@@ -270,6 +290,7 @@ class Tda:
                 ticker=ticker,
                 total_shares=num_shares,
             )
+            self.writer.set_ticker(current_account, ticker_data)
 
             # if the .showCell column has a link "opener" in it, then there are multiple lots
             try:
@@ -280,15 +301,14 @@ class Tda:
 
             if is_single_lot:
                 single_lot_dict = dict(
-                    date_acquired=date_acquired,
+                    date_acquired=datetime.strptime(date_acquired, "%m/%d/%y").date().strftime('%Y-%m-%d'),
                     num_shares=num_shares,
                     cost_per_share=cost_per_share,
                     total_cost=total_cost,
                     term=term
                 )
-                self.writer.set_cost_basis(current_account, ticker_data, [single_lot_dict])
+                self.writer.add_cost_basis(current_account, ticker_data['ticker'], single_lot_dict)
             else:
-                lots = []
                 header_row_id = row.get_attribute('id')
                 lots_row_id = header_row_id.replace('SUM_', 'L_')
                 lots_rows = self.driver.find_elements_by_css_selector(f"#{lots_row_id} tr")
@@ -302,15 +322,13 @@ class Tda:
                     total_cost = lots_row.find_element_by_css_selector('td.Amount').get_attribute('textContent')
                     term = lots_row.find_element_by_css_selector('td.Term').get_attribute('textContent').lower()
                     lots_dict = dict(
-                        date_acquired=date_acquired,
+                        date_acquired=datetime.strptime(date_acquired, "%m/%d/%y").date().strftime('%Y-%m-%d'),
                         num_shares=num_shares,
                         cost_per_share=cost_per_share,
                         total_cost=total_cost,
                         term=term
                     )
-                    lots.append(lots_dict)
-                self.writer.set_cost_basis(current_account, ticker_data, lots)
-
+                    self.writer.add_cost_basis(current_account, ticker_data['ticker'], lots_dict)
         # switch driver back to default content
         self.driver.switch_to.default_content()
 
