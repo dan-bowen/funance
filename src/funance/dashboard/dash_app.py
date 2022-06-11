@@ -76,10 +76,9 @@ def create_app(*charts):
     app = Dash(__name__)
     app.layout = html.Div(
         children=[
-            html.H1(children="Funance Dashboard", ),
+            html.H1(children="Funance", ),
             html.P(
-                children="Fun and data exploration with"
-                         " personal finance data.",
+                children="Fun with personal finance data exploration.",
             ),
             html.Div(children=children)
         ]

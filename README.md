@@ -1,3 +1,3 @@
-# Funance (Fuh · nance) 
+# Funance
 
-is a collection of tools for personal finance data exploration.
+A collection of tools for personal finance data exploration.
