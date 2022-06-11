@@ -9,7 +9,7 @@ logger = get_logger('csv')
 
 
 class CsvFormatter:
-    HEADERS = ['account_name', 'ticker', 'date_acquired', 'num_shares', 'cost_per_share', 'total_cost']
+    HEADERS = ['account_name', 'ticker', 'date_acquired', 'num_shares', 'cost_per_share', 'total_cost', 'term']
 
     def __init__(self):
         pass
@@ -31,7 +31,7 @@ class CsvFormatter:
             writer = csv.DictWriter(csv_file, fieldnames=self.HEADERS)
             writer.writeheader()
             for filename in matching_filenames:
-                logger.debug(f'Processing file {filename}')
+                logger.info(f'Processing file {filename}')
                 with open(f"{EXPORT_DIR}/{filename}", "r") as src_file:
                     data = json.load(src_file)
                     for a in data['accounts']:
@@ -43,9 +43,10 @@ class CsvFormatter:
                                     num_shares=lot['num_shares'],
                                     cost_per_share=lot['cost_per_share'],
                                     total_cost=lot['total_cost'],
-                                    account_name=a['account_name']
+                                    account_name=a['account_name'],
+                                    term=lot['term']
                                 ))
-        logger.debug(f'Generated file: {exported_filename}')
+        logger.info(f'Generated file: {exported_filename}')
 
 
 class UnsupportedFormatterException(Exception):
