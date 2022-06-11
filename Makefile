@@ -14,7 +14,7 @@ help:
 # https://click.palletsprojects.com/en/7.x/setuptools/#setuptools-integration
 #
 init: ## Create venv and install dependencies
-	@pip3 install --editable .
+	@pip3 install --editable .[dev]
 
 update: ## Update the pip package
 	@pip3 install --upgrade .
@@ -27,4 +27,4 @@ tail: ## Tail the log file
 	@tail -f .tmp/log.tmp
 
 test: ## Run python unit tests
-	@python -m unittest discover -s src
+	@nose2

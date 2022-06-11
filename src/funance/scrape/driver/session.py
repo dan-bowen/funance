@@ -2,9 +2,7 @@ import json
 import os
 
 import attr
-from funance.scrape.common import Paths
-
-SESSION_FILE = os.path.join(Paths.TMP_DIR, 'session.json')
+from funance.common.paths import SESSION_FILE
 
 
 @attr.define(kw_only=True)

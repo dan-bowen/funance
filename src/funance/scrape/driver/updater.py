@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Union
 
 import requests
-from funance.scrape.common import Paths
+from funance.common.paths import CHROMEDRIVER_DIR
 from funance.scrape.driver.session import Session
 
 """
@@ -58,7 +58,7 @@ def get_chromedriver_local_version(chrome_version: str) -> Union[str, None]:
     v = parse_version(chrome_version)
     # iterate directory where drivers are stored
     matching_dirs = [
-        d for d in os.listdir(Paths.CHROMEDRIVER_DIR)
+        d for d in os.listdir(CHROMEDRIVER_DIR)
         if d.startswith(f"{v['major']}.{v['minor']}.{v['build']}")
     ]
     matching_dirs = sorted(matching_dirs, reverse=True)
@@ -82,7 +82,7 @@ def get_chromedriver_upstream_version(chrome_version):
 
 
 def get_chromedriver_dir(chromedriver_version):
-    return os.path.join(Paths.CHROMEDRIVER_DIR, chromedriver_version)
+    return os.path.join(CHROMEDRIVER_DIR, chromedriver_version)
 
 
 def local_chromedriver_exists(chromedriver_version):
