@@ -1,10 +1,16 @@
-import json
 import csv
+import json
 import os
+
 from funance.common.paths import EXPORT_DIR
+from funance.common.logger import get_logger
+
+logger = get_logger('csv')
 
 
 class CsvFormatter:
+    HEADERS = ['account_name', 'ticker', 'date_acquired', 'num_shares', 'cost_per_share', 'total_cost', 'term']
+
     def __init__(self):
         pass
 
@@ -13,24 +19,24 @@ class CsvFormatter:
             f for f in os.listdir(EXPORT_DIR) if f.endswith('.json')
         ]
         filenames.sort(reverse=True)
-        print(f"[DEBUG] Found exported filenames: {filenames}")
+        logger.debug(f"Found exported filenames: {filenames}")
         # set prefix to that of the first element of the first filename
         prefix = filenames[0].split('.')[0]
         matching_filenames = [
             f for f in filenames if f.startswith(prefix)
         ]
-        print(f"[DEBUG] Found matching filenames: {matching_filenames}")
+        logger.debug(f"Found matching filenames: {matching_filenames}")
         exported_filename = f'{EXPORT_DIR}/{prefix}.csv'
         with open(exported_filename, mode='w') as csv_file:
-            fieldnames = ['account_name', 'ticker', 'date_acquired', 'num_shares', 'cost_per_share', 'total_cost']
-            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer = csv.DictWriter(csv_file, fieldnames=self.HEADERS)
             writer.writeheader()
+
             for filename in matching_filenames:
-                print(f'[DEBUG] Processing file {filename}')
+                logger.info(f'Processing file {filename}')
                 with open(f"{EXPORT_DIR}/{filename}", "r") as src_file:
                     data = json.load(src_file)
-                    for a in data['accounts']:
-                        for cb in a['cost_basis']:
+                    for a in data['accounts'].values():
+                        for cb in a['cost_basis'].values():
                             for lot in cb['lots']:
                                 writer.writerow(dict(
                                     ticker=cb['ticker'],
@@ -38,9 +44,10 @@ class CsvFormatter:
                                     num_shares=lot['num_shares'],
                                     cost_per_share=lot['cost_per_share'],
                                     total_cost=lot['total_cost'],
-                                    account_name=a['account_name']
+                                    account_name=a['account_name'],
+                                    term=lot['term']
                                 ))
-        print(f'[INFO] Generated file: {exported_filename}')
+        logger.info(f'Generated file: {exported_filename}')
 
 
 class UnsupportedFormatterException(Exception):

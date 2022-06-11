@@ -15,9 +15,7 @@ def scrape(provider, session):
 
     try:
         p = ProviderFactory().get_provider(provider, session)
-        p.wait_for_login()
-        p.get_cost_basis()
-        p.write_export()
+        p.scrape()
     except (WebDriverException, KeyboardInterrupt) as e:
         # print("[INFO] Quitting chromedriver")
         # driver.close()

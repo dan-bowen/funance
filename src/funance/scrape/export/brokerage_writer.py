@@ -1,7 +1,7 @@
 import time
 import json
 from datetime import date
-from marshmallow import Schema, fields, post_load, pre_dump, ValidationError
+from marshmallow import Schema, fields, post_load, pre_dump, validate, ValidationError
 from funance.common.paths import EXPORT_DIR
 
 
@@ -10,6 +10,7 @@ class StockLotSchema(Schema):
     num_shares = fields.Str(required=True)
     cost_per_share = fields.Str(required=True)
     total_cost = fields.Str(required=True)
+    term = fields.Str(required=True, validate=validate.OneOf(["short", "long"]))
 
     class Meta:
         ordered = True
@@ -28,7 +29,7 @@ class StockTickerSchema(Schema):
 class AccountSchema(Schema):
     account_name = fields.Str(required=True)
     cash = fields.Str()
-    cost_basis = fields.List(fields.Nested(StockTickerSchema), required=True)
+    cost_basis = fields.Dict(keys=fields.Str(required=True), values=fields.Nested(StockTickerSchema))
 
     class Meta:
         ordered = True
@@ -44,7 +45,7 @@ class MetaSchema(Schema):
 
 class JsonSchema(Schema):
     _meta = fields.Nested(MetaSchema)
-    accounts = fields.List(fields.Nested(AccountSchema), required=True)
+    accounts = fields.Dict(keys=fields.Str(required=True), values=fields.Nested(AccountSchema))
 
     class Meta:
         ordered = True
@@ -53,10 +54,21 @@ class JsonSchema(Schema):
 class BrokerageWriter:
     def __init__(self, brokerage):
         self.brokerage = brokerage
-        self.accounts = []
+        self.accounts = {}
 
-    def add_account(self, account):
-        self.accounts.append(account)
+    def set_account(self, account: dict):
+        self.accounts[account['account_name']] = account
+        self.accounts[account['account_name']]['cost_basis'] = {}
+
+    def set_cash(self, account_name: str, cash: str):
+        self.accounts[account_name]['cash'] = cash
+
+    def set_ticker(self, account_name: str, ticker: dict):
+        self.accounts[account_name]['cost_basis'][ticker['ticker']] = ticker
+        self.accounts[account_name]['cost_basis'][ticker['ticker']]['lots'] = []
+
+    def add_cost_basis(self, account_name: str, ticker: str, stock_lot: dict):
+        self.accounts[account_name]['cost_basis'][ticker]['lots'].append(stock_lot)
 
     def dump_schema(self):
         try:
