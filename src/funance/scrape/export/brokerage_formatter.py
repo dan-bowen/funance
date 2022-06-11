@@ -1,7 +1,11 @@
-import json
 import csv
+import json
+import logging
 import os
+
 from funance.common.paths import EXPORT_DIR
+
+logging.basicConfig(format='[%(levelname)s]: %(message)s', level=logging.DEBUG)
 
 
 class CsvFormatter:
@@ -13,20 +17,20 @@ class CsvFormatter:
             f for f in os.listdir(EXPORT_DIR) if f.endswith('.json')
         ]
         filenames.sort(reverse=True)
-        print(f"[DEBUG] Found exported filenames: {filenames}")
+        logging.debug(f"Found exported filenames: {filenames}")
         # set prefix to that of the first element of the first filename
         prefix = filenames[0].split('.')[0]
         matching_filenames = [
             f for f in filenames if f.startswith(prefix)
         ]
-        print(f"[DEBUG] Found matching filenames: {matching_filenames}")
+        logging.debug(f"Found matching filenames: {matching_filenames}")
         exported_filename = f'{EXPORT_DIR}/{prefix}.csv'
         with open(exported_filename, mode='w') as csv_file:
             fieldnames = ['account_name', 'ticker', 'date_acquired', 'num_shares', 'cost_per_share', 'total_cost']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
             for filename in matching_filenames:
-                print(f'[DEBUG] Processing file {filename}')
+                logging.debug(f'Processing file {filename}')
                 with open(f"{EXPORT_DIR}/{filename}", "r") as src_file:
                     data = json.load(src_file)
                     for a in data['accounts']:
@@ -40,7 +44,7 @@ class CsvFormatter:
                                     total_cost=lot['total_cost'],
                                     account_name=a['account_name']
                                 ))
-        print(f'[INFO] Generated file: {exported_filename}')
+        logging.debug(f'Generated file: {exported_filename}')
 
 
 class UnsupportedFormatterException(Exception):
