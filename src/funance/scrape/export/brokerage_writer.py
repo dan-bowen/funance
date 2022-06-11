@@ -1,7 +1,7 @@
 import time
 import json
 from datetime import date
-from marshmallow import Schema, fields, post_load, pre_dump, ValidationError
+from marshmallow import Schema, fields, post_load, pre_dump, validate, ValidationError
 from funance.common.paths import EXPORT_DIR
 
 
@@ -10,6 +10,7 @@ class StockLotSchema(Schema):
     num_shares = fields.Str(required=True)
     cost_per_share = fields.Str(required=True)
     total_cost = fields.Str(required=True)
+    term = fields.Str(required=True, validate=validate.OneOf(["short", "long"]))
 
     class Meta:
         ordered = True

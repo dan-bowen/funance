@@ -1,14 +1,16 @@
 import csv
 import json
-import logging
 import os
 
 from funance.common.paths import EXPORT_DIR
+from funance.common.logger import get_logger
 
-logging.basicConfig(format='[%(levelname)s]: %(message)s', level=logging.DEBUG)
+logger = get_logger('csv')
 
 
 class CsvFormatter:
+    HEADERS = ['account_name', 'ticker', 'date_acquired', 'num_shares', 'cost_per_share', 'total_cost']
+
     def __init__(self):
         pass
 
@@ -17,20 +19,19 @@ class CsvFormatter:
             f for f in os.listdir(EXPORT_DIR) if f.endswith('.json')
         ]
         filenames.sort(reverse=True)
-        logging.debug(f"Found exported filenames: {filenames}")
+        logger.debug(f"Found exported filenames: {filenames}")
         # set prefix to that of the first element of the first filename
         prefix = filenames[0].split('.')[0]
         matching_filenames = [
             f for f in filenames if f.startswith(prefix)
         ]
-        logging.debug(f"Found matching filenames: {matching_filenames}")
+        logger.debug(f"Found matching filenames: {matching_filenames}")
         exported_filename = f'{EXPORT_DIR}/{prefix}.csv'
         with open(exported_filename, mode='w') as csv_file:
-            fieldnames = ['account_name', 'ticker', 'date_acquired', 'num_shares', 'cost_per_share', 'total_cost']
-            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer = csv.DictWriter(csv_file, fieldnames=self.HEADERS)
             writer.writeheader()
             for filename in matching_filenames:
-                logging.debug(f'Processing file {filename}')
+                logger.debug(f'Processing file {filename}')
                 with open(f"{EXPORT_DIR}/{filename}", "r") as src_file:
                     data = json.load(src_file)
                     for a in data['accounts']:
@@ -44,7 +45,7 @@ class CsvFormatter:
                                     total_cost=lot['total_cost'],
                                     account_name=a['account_name']
                                 ))
-        logging.debug(f'Generated file: {exported_filename}')
+        logger.debug(f'Generated file: {exported_filename}')
 
 
 class UnsupportedFormatterException(Exception):

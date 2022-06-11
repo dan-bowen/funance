@@ -4,8 +4,12 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, WebDriverException, TimeoutException, NoSuchWindowException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException, TimeoutException, \
+    NoSuchWindowException
 from funance.scrape.export import BrokerageWriter
+from funance.common.logger import get_logger
+
+logger = get_logger('tda')
 
 
 class Tda:
@@ -13,8 +17,23 @@ class Tda:
         self.driver = driver
         self.wait = WebDriverWait(self.driver, 10)
         self.writer = BrokerageWriter('tda')
+        self.cash = {}
 
-    def wait_for_login(self):
+    def scrape(self):
+        self._wait_for_login()
+
+        self._get_cash()
+        self._get_cost_basis()
+        for account in self._get_account_switcher_data():
+            # The active account was already scraped above, so skip it in this loop
+            if not account['is_active']:
+                logger.info(f"Switching account: {account['account_name']}")
+                self._switch_account(account['account_name'])
+                self._get_cash()
+                self._get_cost_basis()
+        self._write_export()
+
+    def _wait_for_login(self):
         self.driver.get('https://invest.ameritrade.com/')
         # Wait for the account switcher to appear. This is the hint that the user has logged in
         try:
@@ -25,7 +44,7 @@ class Tda:
         except TimeoutException:
             is_authenticated = False
 
-        print(f"[DEBUG] Logged On: {is_authenticated}")
+        logger.info(f"Logged On: {is_authenticated}")
 
     def _switch_account(self, account_name):
         account_switcher_select = self.driver.find_element_by_id('accountSwitcherSelectBox')
@@ -47,7 +66,7 @@ class Tda:
         - Link Accounts     Throw away
         - Edit Nickname     Throw away
         """
-        account_switcher_trs = account_switcher_trs[1:len(account_switcher_trs)-3]
+        account_switcher_trs = account_switcher_trs[1:len(account_switcher_trs) - 3]
         for tr in account_switcher_trs:
             account_nickname_cell = tr.find_element_by_css_selector('td.dijitMenuItemLabel span.accountNickname')
             account_nickname = account_nickname_cell.text
@@ -108,7 +127,7 @@ class Tda:
                     account_name=account_name,
                     is_active=active_account_id == account_id
                 ))
-        print(f'[DEBUG] All Accounts: {my_accounts}')
+        logger.debug(f'All Accounts: {my_accounts}')
         return my_accounts
 
     def _get_current_account(self):
@@ -118,8 +137,53 @@ class Tda:
             if account['is_active']:
                 current_account = account
                 break
-        print(f"[INFO] Current Account: {current_account['account_name']}")
+        logger.info(f"Current Account: {current_account['account_name']}")
         return current_account
+
+    def _get_cash(self):
+        self._visit_balances()
+        self._get_cash_for_current_account()
+
+    def _visit_balances(self):
+        # Move to "My Account" element and click it
+        my_account_link = self.wait.until(
+            EC.element_to_be_clickable((By.LINK_TEXT, 'My Account'))
+        )
+        actions = ActionChains(self.driver)
+        actions.move_to_element(my_account_link)
+        actions.click(my_account_link)
+        actions.perform()
+
+        # Move to "Balances" link and click it
+        balances_link = self.wait.until(
+            EC.element_to_be_clickable((By.LINK_TEXT, 'Balances'))
+        )
+        actions = ActionChains(self.driver)
+        actions.move_to_element(balances_link)
+        actions.click(balances_link)
+        actions.perform()
+
+    def _get_cash_for_current_account(self):
+        # Move to "Summary" element and click it
+        summary_button = self.wait.until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, 'div.balancesSubPageTabs span[data-clicked="SUMMARY"]'))
+        )
+        actions = ActionChains(self.driver)
+        actions.move_to_element(summary_button)
+        actions.click(summary_button)
+        actions.perform()
+
+        summary_table = self.wait.until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, '.summaryTabTable'))
+        )
+        summary_rows = summary_table.find_elements_by_css_selector('tbody tr')
+        cash_row = summary_rows[1]
+        cash = cash_row.find_elements_by_css_selector('td')[1].text
+
+        current_account = self._get_current_account()['account_name']
+        self.cash[current_account] = cash.replace('$', '').replace(',', '')
 
     def _visit_stock_lots(self):
         # Move to "My Account" element and click it
@@ -140,15 +204,9 @@ class Tda:
         actions.click(cost_basis_link)
         actions.perform()
 
-    def get_cost_basis(self):
+    def _get_cost_basis(self):
         self._visit_stock_lots()
         self._get_cost_basis_for_current_account()
-        for account in self._get_account_switcher_data():
-            # The active account was already scraped above, so skip it in this loop
-            if not account['is_active']:
-                print(f"[INFO] Switching account: {account['account_name']}")
-                self._switch_account(account['account_name'])
-                self._get_cost_basis_for_current_account()
 
     def _switch_to_main_frame(self):
         # Switch to the "main" frame where cost basis tables are located
@@ -179,9 +237,9 @@ class Tda:
 
     def _get_cost_basis_for_current_account(self):
         current_account = self._get_current_account()['account_name']
-        print(f'[INFO] Getting cost basis for account: {current_account}')
+        logger.info(f'Getting cost basis for account: {current_account}')
 
-        acct = dict(account_name=current_account, cash='', cost_basis=[])
+        acct = dict(account_name=current_account, cash=self.cash[current_account], cost_basis=[])
 
         # FIXME
         # For an unknown reason NoSuchWindowException is being thrown when selecting an element inside the frame
@@ -193,7 +251,7 @@ class Tda:
                 cost_basis_table = self._click_and_wait_for_cost_basis()
                 break
             except NoSuchWindowException:
-                print('[DEBUG] NoSuchWindowException while getting cost basis')
+                logger.warn('NoSuchWindowException while getting cost basis')
                 continue
 
         cost_basis_rows = cost_basis_table.find_elements_by_css_selector('tr.headerrows')
@@ -205,9 +263,9 @@ class Tda:
             num_shares = row.find_element_by_css_selector('td.Quantity').text
             cost_per_share = row.find_element_by_css_selector('td.AmountPerShare').text
             total_cost = row.find_element_by_css_selector('td.Amount').text
-            term = row.find_element_by_css_selector('td.Term').text
+            term = row.find_element_by_css_selector('td.Term').text.lower()
 
-            print(f"[INFO] Getting cost basis for ticker: {ticker}")
+            logger.info(f"Getting cost basis for ticker: {ticker}")
 
             ticker_data = dict(
                 company_name=company_name,
@@ -229,7 +287,7 @@ class Tda:
                     num_shares=num_shares,
                     cost_per_share=cost_per_share,
                     total_cost=total_cost,
-                    # term=term
+                    term=term
                 )
                 ticker_data['lots'].append(single_lot_dict)
             else:
@@ -241,14 +299,16 @@ class Tda:
                     # to get text content of hidden elements.
                     date_acquired = lots_row.find_element_by_css_selector('td.OpenDate').get_attribute('textContent')
                     num_shares = lots_row.find_element_by_css_selector('td.Quantity').get_attribute('textContent')
-                    cost_per_share = lots_row.find_element_by_css_selector('td.AmountPerShare').get_attribute('textContent')
+                    cost_per_share = lots_row.find_element_by_css_selector('td.AmountPerShare').get_attribute(
+                        'textContent')
                     total_cost = lots_row.find_element_by_css_selector('td.Amount').get_attribute('textContent')
-
+                    term = lots_row.find_element_by_css_selector('td.Term').get_attribute('textContent').lower()
                     lots_dict = dict(
                         date_acquired=date_acquired,
                         num_shares=num_shares,
                         cost_per_share=cost_per_share,
-                        total_cost=total_cost
+                        total_cost=total_cost,
+                        term=term
                     )
                     ticker_data['lots'].append(lots_dict)
             acct['cost_basis'].append(ticker_data)
@@ -257,5 +317,5 @@ class Tda:
         # switch driver back to default content
         self.driver.switch_to.default_content()
 
-    def write_export(self):
+    def _write_export(self):
         self.writer.write()
