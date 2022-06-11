@@ -5,6 +5,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from funance.scrape.export import BrokerageWriter
+from funance.common.logger import get_logger
+
+logger = get_logger('vanguard')
 
 
 class Vanguard:
@@ -25,7 +28,7 @@ class Vanguard:
         except TimeoutException:
             is_authenticated = False
 
-        print(f"[DEBUG] Logged On: {is_authenticated}")
+        logger.info(f"Logged On: {is_authenticated}")
 
     def _wait_for_cost_basis_tables(self):
         """
@@ -45,11 +48,11 @@ class Vanguard:
 
         account_tables = self.driver.find_elements_by_xpath('//table[contains(@class, "dataTable")]')
         for account_table in account_tables:
-            # print(f"Account table: [id='{account_table.get_attribute('id')}']")
+            # logger.debug(f"Account table: [id='{account_table.get_attribute('id')}']")
             # account name
             account_name_element = account_table.find_element_by_tag_name('h1')
             account_name = account_name_element.text
-            print(f"[INFO] Getting cost basis for account: {account_name}")
+            logger.info(f"Getting cost basis for account: {account_name}")
 
             acct = dict(account_name=account_name, cash='', cost_basis=[])
 
@@ -66,8 +69,8 @@ class Vanguard:
                 # ticker
                 ticker_cell = row.find_element_by_css_selector('td:nth-child(1)')
                 ticker = ticker_cell.text
-                print(f"[INFO] Getting cost basis for ticker: {ticker}")
-                # print(f"Ticker row: [id='{account_table.get_attribute('id')}'] tr[index='{row.get_attribute('index')}']")
+                logger.info(f"Getting cost basis for ticker: {ticker}")
+                # logger.debug(f"Ticker row: [id='{account_table.get_attribute('id')}'] tr[index='{row.get_attribute('index')}']")
 
                 """
                 Company name
@@ -102,7 +105,7 @@ class Vanguard:
 
                     lots_container = lots_row.find_element_by_css_selector('.vg-Navbox.vg-NavboxClosed')
                     lots_container_id = lots_container.get_attribute('id')
-                    # print(f"Lots container: [id='{lots_container_id}']")
+                    # logger.debug(f"Lots container: [id='{lots_container_id}']")
 
                     # This is the clickable "Show details" link that, when clicked, will load the stock
                     # lots into the DOM.
@@ -116,7 +119,7 @@ class Vanguard:
 
                     # Wait for the lots to be loaded into the DOM
                     css_path_lots_table = f"[id='{lots_container_id}'] .vg-NavboxBody .dataTable"
-                    # print(f"Lots table: {css_path_lots_table}")
+                    # logger.debug(f"Lots table: {css_path_lots_table}")
                     # TODO handle selenium.common.exceptions.TimeoutException
                     lots_table = self.wait.until(
                         lambda x: x.find_element_by_css_selector(css_path_lots_table)
@@ -151,7 +154,7 @@ class Vanguard:
                     self.writer.add_account(acct)
 
                 except NoSuchElementException:
-                    print('[DEBUG] NoSuchElementException')
+                    logger.warn('NoSuchElementException')
                     raise
 
     def write_export(self):
