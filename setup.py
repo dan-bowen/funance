@@ -12,7 +12,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'selenium>=3,<4',
-        'click>=7,<8',
+        'click>=8,<9',
         'marshmallow>=3,<4',
         'dash',
         'plotly',
