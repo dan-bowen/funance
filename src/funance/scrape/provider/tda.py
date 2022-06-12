@@ -19,7 +19,6 @@ class Tda:
         self.driver = driver
         self.wait = WebDriverWait(self.driver, 10)
         self.writer = BrokerageWriter('tda')
-        self.cash = {}
 
     def scrape(self):
         self._wait_for_login()
