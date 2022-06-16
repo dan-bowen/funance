@@ -12,6 +12,9 @@ from funance.scrape.export import BrokerageWriter
 logger = get_logger('vanguard')
 
 
+date_foramt = '%m/%d/%Y'
+
+
 def clean_account_name(account_name: str):
     """
     Clean the account name
@@ -142,7 +145,7 @@ class Vanguard:
                     # Check if this row has a Buy link. This row has our ticker data.
                     row.find_element_by_link_text('Buy')
                 except NoSuchElementException:
-                    # we don't care about this row
+                    # skip this row
                     continue
 
                 # ticker
@@ -178,7 +181,6 @@ class Vanguard:
                 self.writer.set_ticker(account_name, stock_ticker)
 
                 # Populate stock lots
-                # TODO This is not finding stock lots for tickers under Mutual funds.
                 try:
                     # Lots are shown in the tr adjacent to the Ticker (current) tr
                     lots_row = row.find_element_by_xpath('./following-sibling::tr')
@@ -207,20 +209,53 @@ class Vanguard:
 
                     # parse lots
                     lots_table_rows = lots_table.find_elements_by_tag_name('tr')
-                    # skip the first row as it is a header and does not have cost-basis data
-                    lots_table_rows.pop(0)
                     for lots_table_row in lots_table_rows:
                         date_acquired = lots_table_row.find_element_by_css_selector('td:nth-child(1)').text
+                        logger.debug(f"date_acquired {date_acquired}")
+
+                        # The table has a header (most cases).
+                        if date_acquired == 'Date acquired (noncovered shares)':
+                            # Discard this row since it doesn't contain cost-basis data.
+                            continue
+
+                        """
+                        The table does not have a header.
+                        
+                        This appears to be the case for Mutual Funds only, but may have something to do 
+                        with "Noncovered shares" rather than Mutual Funds vs. other securities, since that is what is 
+                        actually checked for the edge case.
+                              
+                        The page popup says:
+                              
+                            Noncovered shares include shares acquired before the effective date for cost basis 
+                            reporting requirements or shares acquired in an account that isn't subject to Form 1099-B 
+                            reporting, such as an IRA or C-corporation account. In these cases, Vanguard doesn't 
+                            report cost basis information to the IRS.
+                              
+                        TLDR; Noncovered shares don't have a date_acquired value. This makes sense from a cost-basis 
+                        perspective but the schema must still be satisfied with a date.
+                        """
+                        if date_acquired == 'Noncovered shares':
+                            """
+                            Use today's date to satisfy the schema, although this is not technically accurate as
+                            stated above.
+                            
+                            Use Vanguard native date format, since conversion to the schema format happens below.
+                            """
+                            date_acquired = datetime.today().strftime(date_foramt)
+
                         num_shares = lots_table_row.find_element_by_css_selector('td:nth-child(2)').text
                         cost_per_share = lots_table_row.find_element_by_css_selector('td:nth-child(3)').text
                         total_cost = lots_table_row.find_element_by_css_selector('td:nth-child(4)').text
-
-                        # term_short = lots_table_row.find_element_by_css_selector('td:nth-child(6)').text
+                        term_short = lots_table_row.find_element_by_css_selector('td:nth-child(6)').text
+                        logger.debug(f"term_short:{term_short}")
                         term_long = lots_table_row.find_element_by_css_selector('td:nth-child(7)').text
+                        logger.debug(f"term_long:{term_long}")
+                        # TODO This logic needs to be rechecked (to account for negative, and other values)
                         term = 'long' if term_long.startswith('$') else 'short'
 
                         stock_lot = dict(
-                            date_acquired=datetime.strptime(date_acquired, "%m/%d/%Y").date().strftime('%Y-%m-%d'),
+                            date_acquired=datetime.strptime(date_acquired, date_foramt).date().strftime('%Y-%m-%d'),
                             num_shares=num_shares,
                             cost_per_share=cost_per_share.replace('$', '').replace(',', '').strip(),
                             total_cost=total_cost.replace('$', '').replace(',', '').strip(),
@@ -228,6 +263,7 @@ class Vanguard:
                         )
 
                         self.writer.add_cost_basis(account_name, stock_ticker['ticker'], stock_lot)
+                        logger.debug(f"stock lot {stock_lot}")
 
                     # Close stock lots by clicking "Show details" again.
                     # NOTE: Closing this seems to help with .click() not working in
