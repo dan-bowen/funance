@@ -132,7 +132,6 @@ class Vanguard:
 
         account_tables = self.driver.find_elements_by_xpath('//table[contains(@class, "dataTable")]')
         for account_table in account_tables:
-            # logger.debug(f"Account table: [id='{account_table.get_attribute('id')}']")
             # account name
             account_name = account_table.find_element_by_tag_name('h1').text
             account_name = clean_account_name(account_name)
@@ -152,7 +151,6 @@ class Vanguard:
                 ticker_cell = row.find_element_by_css_selector('td:nth-child(1)')
                 ticker = ticker_cell.text
                 logger.info(f"Getting cost basis for ticker: {ticker}")
-                # logger.debug(f"Ticker row: [id='{account_table.get_attribute('id')}'] tr[index='{row.get_attribute('index')}']")
 
                 """
                 Company name
@@ -187,7 +185,6 @@ class Vanguard:
 
                     lots_container = lots_row.find_element_by_css_selector('.vg-Navbox.vg-NavboxClosed')
                     lots_container_id = lots_container.get_attribute('id')
-                    # logger.debug(f"Lots container: [id='{lots_container_id}']")
 
                     # This is the clickable "Show details" link that, when clicked, will load the stock
                     # lots into the DOM.
@@ -201,7 +198,6 @@ class Vanguard:
 
                     # Wait for the lots to be loaded into the DOM
                     css_path_lots_table = f"[id='{lots_container_id}'] .vg-NavboxBody .dataTable"
-                    # logger.debug(f"Lots table: {css_path_lots_table}")
                     # TODO handle selenium.common.exceptions.TimeoutException
                     lots_table = self.wait.until(
                         lambda x: x.find_element_by_css_selector(css_path_lots_table)
