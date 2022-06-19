@@ -5,6 +5,8 @@ import os
 from funance.common.paths import EXPORT_DIR
 from funance.common.logger import get_logger
 
+PREFIX = 'brokerage'
+
 logger = get_logger('csv')
 
 
@@ -16,22 +18,15 @@ class CsvFormatter:
 
     def format(self):
         filenames = [
-            f for f in os.listdir(EXPORT_DIR) if f.endswith('.json')
+            f for f in os.listdir(EXPORT_DIR) if f.startswith(PREFIX) and f.endswith('.json')
         ]
-        filenames.sort(reverse=True)
         logger.debug(f"Found exported filenames: {filenames}")
-        # set prefix to that of the first element of the first filename
-        prefix = filenames[0].split('.')[0]
-        matching_filenames = [
-            f for f in filenames if f.startswith(prefix)
-        ]
-        logger.debug(f"Found matching filenames: {matching_filenames}")
-        exported_filename = f'{EXPORT_DIR}/{prefix}.csv'
+        exported_filename = f'{EXPORT_DIR}/{PREFIX}.csv'
         with open(exported_filename, mode='w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=self.HEADERS)
             writer.writeheader()
 
-            for filename in matching_filenames:
+            for filename in filenames:
                 logger.info(f'Processing file {filename}')
                 with open(f"{EXPORT_DIR}/{filename}", "r") as src_file:
                     data = json.load(src_file)
