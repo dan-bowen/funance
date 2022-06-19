@@ -36,8 +36,9 @@ def service(command):
                 try:
                     # throws WebDriverException if chromedriver service is not running
                     driver.service.assert_process_still_running()
-                except (WebDriverException, KeyboardInterrupt):
+                except (WebDriverException, KeyboardInterrupt) as e:
                     driver.quit()
+                    raise e
 
 
 @click.command(
