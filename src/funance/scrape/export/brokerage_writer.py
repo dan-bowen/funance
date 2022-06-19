@@ -1,8 +1,10 @@
-import time
 import json
-from datetime import date
-from marshmallow import Schema, fields, post_load, pre_dump, validate, ValidationError
+
+from marshmallow import Schema, fields, validate, ValidationError
+
 from funance.common.paths import EXPORT_DIR
+
+PREFIX = 'brokerage'
 
 
 class StockLotSchema(Schema):
@@ -87,6 +89,5 @@ class BrokerageWriter:
         return JsonSchema().dump(result)
 
     def write(self):
-        today = date.today().strftime("%Y-%m-%d")
-        with open(f"{EXPORT_DIR}/{today}.{self.brokerage}.json", 'w') as fp:
+        with open(f"{EXPORT_DIR}/{PREFIX}.{self.brokerage}.json", 'w') as fp:
             json.dump(self.dump_schema(), fp, indent=4)

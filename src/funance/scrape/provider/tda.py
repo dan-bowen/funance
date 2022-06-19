@@ -19,7 +19,6 @@ class Tda:
         self.driver = driver
         self.wait = WebDriverWait(self.driver, 10)
         self.writer = BrokerageWriter('tda')
-        self.cash = {}
 
     def scrape(self):
         self._wait_for_login()
@@ -86,16 +85,16 @@ class Tda:
         This data structure is almost JSON. With a little string manipulation this becomes JSON 
         and a useful data structure.
         
-         uuid:"***REMOVED***",
+         uuid:"C3b9en868-e9cc-22be-af04-025756c4578d",
         savedNavId: "portfolioGain",
         link_account_url: "/grid/p/site#r=linkAccounts",
         editNickNameUrl:"/grid/p/site#r=jPage/cgi-bin/apps/u/AccountManagement",
-        selected_account: "***REMOVED***",
+        selected_account: "987654321",
         accountsMap: {
-        "***REMOVED***": "Brokerage",
-        "***REMOVED***": "***REMOVED***",
+        "123456789": "Acct 1",
+        "987654321": "Acct 2",
         isChanged : "yes",
-        active: "***REMOVED***"
+        active: "987654321"
         },
         fromModule: "",
         tradePermissionChanged: false
