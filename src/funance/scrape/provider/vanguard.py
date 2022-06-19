@@ -207,7 +207,7 @@ class Vanguard:
                     lots_table_rows = lots_table.find_elements_by_tag_name('tr')
                     for lots_table_row in lots_table_rows:
                         date_acquired = lots_table_row.find_element_by_css_selector('td:nth-child(1)').text
-                        logger.debug(f"date_acquired {date_acquired}")
+                        logger.debug(f"date_acquired:{date_acquired}")
 
                         # The table has a header (most cases).
                         if date_acquired == 'Date acquired (noncovered shares)':
@@ -243,12 +243,23 @@ class Vanguard:
                         num_shares = lots_table_row.find_element_by_css_selector('td:nth-child(2)').text
                         cost_per_share = lots_table_row.find_element_by_css_selector('td:nth-child(3)').text
                         total_cost = lots_table_row.find_element_by_css_selector('td:nth-child(4)').text
-                        term_short = lots_table_row.find_element_by_css_selector('td:nth-child(6)').text
-                        logger.debug(f"term_short:{term_short}")
-                        term_long = lots_table_row.find_element_by_css_selector('td:nth-child(7)').text
-                        logger.debug(f"term_long:{term_long}")
-                        # TODO This logic needs to be rechecked (to account for negative, and other values)
-                        term = 'long' if term_long.startswith('$') else 'short'
+
+                        # determine short/long term basis
+                        short_term = lots_table_row.find_element_by_css_selector('td:nth-child(6)').text
+                        logger.debug(f"short_term:{short_term}")
+                        long_term = lots_table_row.find_element_by_css_selector('td:nth-child(7)').text
+                        logger.debug(f"long_term:{long_term}")
+
+                        if '$' in short_term and '$' in long_term:
+                            # this seems to be the case when shares have passed the date for cost-basis reporting;
+                            # AKA non-covered shares. See comments above.
+                            term = 'long'
+                        elif '—' == short_term and '$' in long_term:
+                            term = 'long'
+                        elif '$' in short_term and '—' == long_term:
+                            term = 'short'
+                        else:
+                            raise ValueError('"term" not found')
 
                         stock_lot = dict(
                             date_acquired=datetime.strptime(date_acquired, date_foramt).date().strftime('%Y-%m-%d'),
@@ -259,7 +270,7 @@ class Vanguard:
                         )
 
                         self.writer.add_cost_basis(account_name, stock_ticker['ticker'], stock_lot)
-                        logger.debug(f"stock lot {stock_lot}")
+                        logger.info(f"stock lot {stock_lot}")
 
                     # Close stock lots by clicking "Show details" again.
                     # NOTE: Closing this seems to help with .click() not working in
