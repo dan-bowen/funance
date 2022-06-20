@@ -1,0 +1,20 @@
+chart_spec:
+  - name: Retirement Allocation
+    type: invest_allocation
+    account_ids:
+      - 'FirstName MiddleInitial LastName Traditional IRA Brokerage Account ********'
+      - 'FirstName MiddleInitial LastName Roth IRA Brokerage Account ********'
+      - '401k'
+      - 'HSA'
+  - name: Taxable Allocation
+    type: invest_allocation
+    account_ids:
+      - 'Freedom'
+  - name: Raw Data
+    type: invest_cost_basis
+    account_ids:
+      - 'FirstName MiddleInitial LastName Traditional IRA Brokerage Account ********'
+      - 'FirstName MiddleInitial LastName Roth IRA Brokerage Account ********'
+      - '401k'
+      - 'HSA'
+      - 'Freedom'
