@@ -28,14 +28,16 @@ class Projector:
     def get_account(self, account_id):
         return self.accounts.get_account(account_id)
 
-    def get_charts(self):
+    def get_charts(self) -> list:
         charts = []
         for chart in self.spec['chart_spec']:
             accounts = list(
                 map(
                     lambda a: dict(
                         name=self.get_account(a).name,
-                        df=self.get_account(a).get_running_balance_grouped()), chart['account_ids']
+                        df=self.get_account(a).get_running_balance_grouped()
+                    ),
+                    chart['account_ids']
                 )
             )
             charts.append(Chart(name=chart['name'], type=chart['type'], accounts=accounts))
