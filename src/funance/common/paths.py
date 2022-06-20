@@ -12,6 +12,9 @@ PROJECT_DIR = os.path.join(HOME_DIR, '.funance')
 FORECAST_DIST_FILE = os.path.join(ROOT_DIR, 'forecast.dist.yml')
 FORECAST_FILE = os.path.join(PROJECT_DIR, 'forecast.yml')
 
+INVEST_DIST_FILE = os.path.join(ROOT_DIR, 'invest.dist.yml')
+INVEST_FILE = os.path.join(PROJECT_DIR, 'invest.yml')
+
 SESSION_FILE = os.path.join(PROJECT_DIR, 'session.json')
 
 CHROMEDRIVER_DIR = os.path.join(PROJECT_DIR, 'chromedriver')
