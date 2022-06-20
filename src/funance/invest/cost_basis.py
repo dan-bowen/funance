@@ -15,13 +15,16 @@ def _get_cost_basis_df():
 
 def _get_ticker_prices(tickers: list) -> dict:
     # TODO replace with live data from API call or db
+    filled = dict.fromkeys(tickers, None)
     current_prices = {
         'ABBV':   149.40,
         'ADRNY':  26.75,
         'ALLY':   36.15,
         'X_CASH': 1.00
     }
-    return current_prices
+
+    merged = {**filled, **current_prices}
+    return merged
 
 
 def _validate_summary_df(summary_df: pd.DataFrame) -> None:
