@@ -1,4 +1,5 @@
 import json
+import os
 
 from marshmallow import Schema, fields, validate, ValidationError
 
@@ -89,5 +90,5 @@ class BrokerageWriter:
         return JsonSchema().dump(result)
 
     def write(self):
-        with open(f"{EXPORT_DIR}/{PREFIX}.{self.brokerage}.json", 'w') as fp:
+        with open(os.path.join(EXPORT_DIR, f"{PREFIX}.{self.brokerage}.json"), 'w') as fp:
             json.dump(self.dump_schema(), fp, indent=4)

@@ -21,7 +21,8 @@ setup(
         'requests',
         'attrs',
         'python-dateutil',
-        'PyYAML'
+        'PyYAML',
+        'python-dotenv'
     ],
     extras_require={
         'dev': [
