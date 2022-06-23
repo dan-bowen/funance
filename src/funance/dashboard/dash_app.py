@@ -1,12 +1,17 @@
+from dash import Dash, dcc, html, dash_table, Input, Output
 import plotly.graph_objects as go
-from dash import Dash, dcc, html, dash_table
+
+from funance.common.logger import get_logger
+
+logger = get_logger('dash-app')
 
 DATE_FORMAT = '%Y-%m-%d'
 
 
 def create_app(*charts):
+    app = Dash(__name__)
     children = []
-    for chart in charts:
+    for chart_id, chart in enumerate(charts):
         if chart.type == 'line':
             fig = go.Figure()
             fig.update_layout(title=chart.name)
@@ -73,7 +78,33 @@ def create_app(*charts):
                     fig
                 ]))
 
-    app = Dash(__name__)
+        if chart.type == 'ticker_allocation':
+            logger.debug('chart name in loop=%s', chart.name)
+            children.append(html.Div([
+                html.H1(children=chart.name, ),
+                dcc.Dropdown(id=f"invest_allocation_dropdown_{chart_id}", multi=True,
+                             options=[{'label': a, 'value': a} for a in chart.df.account_name.unique()],
+                             value=[a for a in chart.df.account_name.unique()]),
+                dcc.Graph(id=f"invest_allocation_{chart_id}", figure={}),
+            ]))
+
+            @app.callback(
+                Output(f"invest_allocation_{chart_id}", "figure"),
+                Input(f"invest_allocation_dropdown_{chart_id}", "value"))
+            def generate_ticker_allocation(account_names):
+                logger.debug('callback received account_names=%s', account_names)
+                logger.debug('chart name in callback=%s', chart.name)
+                df = chart.df.copy()
+                df = df.loc[df['account_name'].isin(account_names)]
+                pie_fig = go.Figure(
+                    data=[
+                        go.Pie(labels=df['ticker'], values=df['current_value'])
+                    ]
+                )
+                pie_fig.update_traces(textposition='inside', textinfo='percent+label')
+                pie_fig.update_layout(height=800, uniformtext_minsize=10, uniformtext_mode='hide')
+                return pie_fig
+
     app.layout = html.Div(
         children=[
             html.H1(children="Funance", ),

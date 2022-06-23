@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 from funance.dashboard.dash_app import create_app
 from funance.forecast.datespec import DATE_FORMAT
 from funance.forecast.projector import Projector
+from funance.invest.dashboard import get_charts as get_invest_charts
 from funance.common.paths import FORECAST_DIST_FILE, FORECAST_FILE, INVEST_DIST_FILE, INVEST_FILE
 
 
@@ -44,7 +45,8 @@ def dashboard():
                                     end_date.strftime(DATE_FORMAT))
     forecast_charts = projector.get_charts()
 
-    invest_charts = []
+    invest_spec = get_yaml('invest')
+    invest_charts = get_invest_charts(invest_spec['chart_spec'])
 
     charts = forecast_charts + invest_charts
     app = create_app(*charts)
