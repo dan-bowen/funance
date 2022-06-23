@@ -3,6 +3,9 @@ import os
 import pandas as pd
 
 from funance.common.paths import EXPORT_DIR
+from funance.common.logger import get_logger
+
+logger = get_logger('cost-basis')
 
 
 class PriceNotFoundError(Exception):
@@ -14,15 +17,15 @@ def _get_cost_basis_df():
 
 
 def _get_ticker_prices(tickers: list) -> dict:
-    # TODO replace with live data from API call or db
     filled = dict.fromkeys(tickers, None)
-    current_prices = {
-        'ABBV':   149.40,
-        'ADRNY':  26.75,
-        'ALLY':   36.15,
-        'X_CASH': 1.00
-    }
 
+    sheet_url = os.getenv('GOOGLE_SHEETS_PRICES_URL')
+    # change the sharing url to the export url
+    sheet_url = sheet_url.replace('/edit?usp=sharing', '/export?format=csv')
+
+    logger.debug('loading prices from %s', sheet_url)
+    prices_df = pd.read_csv(sheet_url)
+    current_prices = {r['ticker']: r['price'] for r in prices_df.to_dict('records')}
     merged = {**filled, **current_prices}
     return merged
 

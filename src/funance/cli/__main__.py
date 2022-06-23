@@ -3,12 +3,17 @@ https://codeburst.io/building-beautiful-command-line-interfaces-with-python-26c7
 """
 
 import click
+from pathlib import Path
+from dotenv import load_dotenv
 
-from .init import commands as init_group
 from .chromedriver import commands as chromedriver_group
-from .format import commands as format_group
-from .scrape import commands as scrape_group
 from .dashboard import commands as dash_group
+from .format import commands as format_group
+from .init import commands as init_group
+from .scrape import commands as scrape_group
+from funance.common.paths import ENV_FILE
+
+load_dotenv(dotenv_path=Path(ENV_FILE))
 
 
 @click.group()
