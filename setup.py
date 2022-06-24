@@ -14,7 +14,7 @@ setup(
         'selenium>=3,<4',
         'click>=8,<9',
         'marshmallow>=3,<4',
-        'dash',
+        'dash>=2,<3',
         'plotly',
         'pandas',
         'numpy',
@@ -22,7 +22,9 @@ setup(
         'attrs',
         'python-dateutil',
         'PyYAML',
-        'python-dotenv'
+        'python-dotenv',
+        'fakeredis==1.8.1',
+        'pyarrow==8.0.0'
     ],
     extras_require={
         'dev': [

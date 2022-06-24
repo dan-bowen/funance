@@ -5,7 +5,7 @@ from dash import Dash, dcc, html, dash_table
 from dateutil.relativedelta import relativedelta
 
 from funance.common.logger import get_logger
-from funance.dashboard.chart import InvestAllocationChart
+from funance.dashboard.components import TickerAllocationAIO
 from funance.forecast.datespec import DATE_FORMAT
 from funance.forecast.projector import Projector
 from funance.invest.cost_basis import get_allocation_report
@@ -25,7 +25,7 @@ def get_forecast_charts(spec):
 def get_invest_charts(chart_spec):
     allocation_df = get_allocation_report()
     charts = [
-        InvestAllocationChart(df=allocation_df, name=chart['name'], id=chart_type)
+        TickerAllocationAIO(df=allocation_df, title=chart['name'])
         for chart_type, chart in chart_spec.items()
     ]
     return charts
@@ -35,9 +35,8 @@ def create_app(*charts):
     app = Dash(__name__)
     children = []
     for chart_id, chart in enumerate(charts):
-        if isinstance(chart, InvestAllocationChart):
-            children.extend(chart.get_children())
-            chart.register_callback(app)
+        if isinstance(chart, TickerAllocationAIO):
+            children.append(chart)
         elif chart.type == 'line':
             fig = go.Figure()
             fig.update_layout(title=chart.name)
