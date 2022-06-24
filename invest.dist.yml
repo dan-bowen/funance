@@ -1,5 +1,3 @@
 chart_spec:
   ticker_allocation:
     name: Ticker Allocation
-  cost_basis_raw:
-    name: Raw Data
