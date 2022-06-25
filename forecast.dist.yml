@@ -161,15 +161,6 @@ accounts:
         transfer: null
 chart_spec:
   - name: Charts
-    type: line
-    account_ids:
-      - checking
-      - savings
-      - credit_card
-      - 401k
-      - cc_plans
-  - name: Raw Data
-    type: datatable
     account_ids:
       - checking
       - savings

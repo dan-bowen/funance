@@ -9,7 +9,7 @@ from funance.common.paths import (
     INVEST_DIST_FILE,
     INVEST_FILE
 )
-from funance.dashboard.dash_app import get_forecast_charts, get_invest_charts, create_app
+from funance.dashboard.dash_app import create_app
 
 
 def get_watch_files():
@@ -28,13 +28,7 @@ def get_yaml(type_):
 @click.command(short_help='Run the dashboard')
 def dashboard():
     """Open the dashboard"""
-
     forecast_spec = get_yaml('forecast')
-    forecast_charts = get_forecast_charts(forecast_spec)
-
     invest_spec = get_yaml('invest')
-    invest_charts = get_invest_charts(invest_spec['chart_spec'])
-
-    charts = forecast_charts + invest_charts
-    app = create_app(*charts)
+    app = create_app(forecast_spec, invest_spec)
     app.run_server(debug=True, extra_files=get_watch_files())
