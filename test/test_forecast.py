@@ -277,7 +277,7 @@ class TestForecast(unittest.TestCase):
 
     def test_checking_transactions(self):
         spec = FixtureHelper.get_spec_fixture()
-        projector = Projector.from_spec(spec, '2022-01-01', '2022-12-31')
+        projector = Projector.from_spec(spec['forecast'], '2022-01-01', '2022-12-31')
         df = projector.get_account('checking').get_transactions_df()
 
         # Spot-check some rows
@@ -357,7 +357,7 @@ class TestForecast(unittest.TestCase):
 
     def test_cc_transactions(self):
         spec = FixtureHelper.get_spec_fixture()
-        projector = Projector.from_spec(spec, '2022-01-01', '2022-12-31')
+        projector = Projector.from_spec(spec['forecast'], '2022-01-01', '2022-12-31')
         df = projector.get_account('credit_card').get_transactions_df()
 
         # Spot-check some rows

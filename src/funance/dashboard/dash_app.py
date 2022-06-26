@@ -8,9 +8,9 @@ from funance.invest.dashboard import get_charts as get_invest_charts
 logger = get_logger('dash-app')
 
 
-def create_app(forecast_spec: dict, invest_spec: dict):
-    forecast_charts = get_forecast_charts(forecast_spec)
-    invest_charts = get_invest_charts(invest_spec['chart_spec'])
+def create_app(spec):
+    forecast_charts = get_forecast_charts(spec)
+    invest_charts = get_invest_charts(spec)
     charts = forecast_charts + invest_charts
 
     app = Dash(__name__)
