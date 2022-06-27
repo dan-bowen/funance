@@ -188,3 +188,69 @@ class ForecastLineAIO(html.Div):  # html.Div will be the "parent" component
             html.H1(children=title),
             dcc.Graph(id=self.ids.line_chart(aio_id), figure=fig),
         ])
+
+
+class EmergencyFundAIO(html.Div):
+    # A set of functions that create pattern-matching callbacks of the subcomponents
+    class ids:
+        sources_pie_chart = lambda aio_id: {
+            'component':    'EmergencyFundAIO',
+            'subcomponent': 'sources_pie_chart',
+            'aio_id':       aio_id
+        }
+        goal_bullet_chart = lambda aio_id: {
+            'component':    'EmergencyFundAIO',
+            'subcomponent': 'goal_bullet_chart',
+            'aio_id':       aio_id
+        }
+
+    # Make the ids class a public class
+    ids = ids
+
+    # Define the arguments of the All-in-One component
+    def __init__(
+            self,
+            title: str,
+            df: pd.DataFrame,
+            goal: float,
+            actual: float,
+            aio_id=None
+    ):
+        """An All-in-One component pie chart for ticker allocation"""
+
+        # Allow developers to pass in their own `aio_id` if they're
+        # binding their own callback to a particular component.
+        if aio_id is None:
+            # Otherwise use a uuid that has virtually no chance of collision.
+            # Uuids are safe in dash deployments with processes
+            # because this component's callbacks
+            # use a stateless pattern-matching callback:
+            # The actual ID does not matter as long as its unique and matches
+            # the PMC `MATCH` pattern..
+            aio_id = str(uuid.uuid4())
+
+        goal_chart = go.Figure(go.Indicator(
+            mode="number+gauge+delta",
+            value=actual,
+            domain={'x': [0.1, 1], 'y': [0, 1]},
+            title={'text': "<b>Goal</b>"},
+            delta={'reference': goal},
+            gauge={
+                'shape':     "bullet",
+                'axis':      {'range': [None, goal]},
+            }))
+        goal_chart.update_layout(height=250)
+
+        pie_fig = go.Figure(
+            data=[
+                go.Pie(labels=df['name'], values=df['value'])
+            ]
+        )
+        pie_fig.update_traces(textposition='inside', textinfo='percent+label')
+        pie_fig.update_layout(title={'text': 'Fund Sources'}, height=800, uniformtext_minsize=10, uniformtext_mode='hide')
+
+        super().__init__([  # Equivalent to `html.Div([...])`
+            html.H1(children=title),
+            dcc.Graph(id=self.ids.goal_bullet_chart(aio_id), figure=goal_chart),
+            dcc.Graph(id=self.ids.sources_pie_chart(aio_id), figure=pie_fig),
+        ])

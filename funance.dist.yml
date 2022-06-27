@@ -160,6 +160,28 @@ forecast:
             day_of_week: null
             day_of_month: 15
           transfer: null
+  emergency_fund:
+    sources:
+      - name: Savings
+        value: 1000
+      - name: CDs
+        value: 3300
+      - name: Brokerage:Cash
+        value: 1000
+      - name: Brokerage:VTIP
+        value: 1200
+      - name: Brokerage:GLD
+        value: 700
+      - name: Brokerage:MA
+        value: 700
+      - name: Brokerage:Dividends (mo. 3)
+        value: 900
+      - name: HSA:Unreimbursed Expenses
+        value: 100
+    runway_goal_mos: 6
+    # TODO Link this to forecasted spending
+    monthly_spending_assumption: 4000
+
 invest: null
 charts:
   - type: forecast
