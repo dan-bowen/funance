@@ -13,7 +13,7 @@ from funance.invest.cost_basis import get_allocation_report
 logger = get_logger('dash-app')
 
 
-def get_forecast_charts(spec) -> List[Union[ForecastLineAIO, EmergencyFundAIO, TickerAllocationAIO]]:
+def get_forecast_charts(spec: dict) -> List[Union[ForecastLineAIO, EmergencyFundAIO, TickerAllocationAIO]]:
     forecast_spec = spec['forecast']
     ef_spec = spec['forecast']['emergency_fund']
     chart_spec = spec['charts']
@@ -53,7 +53,7 @@ def get_forecast_charts(spec) -> List[Union[ForecastLineAIO, EmergencyFundAIO, T
     return charts
 
 
-def get_invest_charts(spec) -> List[Union[ForecastLineAIO, EmergencyFundAIO, TickerAllocationAIO]]:
+def get_invest_charts(spec: dict) -> List[Union[ForecastLineAIO, EmergencyFundAIO, TickerAllocationAIO]]:
     invest_spec = spec['invest']  # not used, yet
     charts = spec['charts']
     allocation_df = get_allocation_report()
@@ -66,7 +66,7 @@ def get_invest_charts(spec) -> List[Union[ForecastLineAIO, EmergencyFundAIO, Tic
     return charts
 
 
-def create_app(spec) -> Dash:
+def create_app(spec: dict) -> Dash:
     forecast_charts = get_forecast_charts(spec)
     invest_charts = get_invest_charts(spec)
     charts = forecast_charts + invest_charts
