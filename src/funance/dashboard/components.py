@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from dash import Output, Input, State, html, dcc, callback, MATCH
 
 from funance.common.logger import get_logger
-from .redis import RedisStore
+from funance.common.redis import RedisStore
 
 logger = get_logger('component')
 

@@ -40,12 +40,12 @@ class RedisStore:
             buffer.seek(0)
             df_as_bytes = buffer.read()
             hash_key = RedisStore._hash(df_as_bytes)
-            type = 'pd.DataFrame'
+            type_ = 'pd.DataFrame'
             serialized_value = df_as_bytes
         else:
             serialized_value = json.dumps(value, cls=plotly.utils.PlotlyJSONEncoder).encode('utf-8')
             hash_key = RedisStore._hash(serialized_value)
-            type = 'json-serialized'
+            type_ = 'json-serialized'
 
         RedisStore.r.set(
             f'_dash_aio_components_value_{hash_key}',
@@ -53,7 +53,7 @@ class RedisStore:
         )
         RedisStore.r.set(
             f'_dash_aio_components_type_{hash_key}',
-            type
+            type_
         )
         return hash_key
 
