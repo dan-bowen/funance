@@ -185,7 +185,7 @@ class ForecastLineAIO(html.Div):  # html.Div will be the "parent" component
 
         # Define the component's layout
         super().__init__([  # Equivalent to `html.Div([...])`
-            html.H1(children=title),
+            html.H1(children='Forecast'),
             dcc.Graph(id=self.ids.line_chart(aio_id), figure=fig),
         ])
 
@@ -193,14 +193,19 @@ class ForecastLineAIO(html.Div):  # html.Div will be the "parent" component
 class EmergencyFundAIO(html.Div):
     # A set of functions that create pattern-matching callbacks of the subcomponents
     class ids:
+        runway_chart = lambda aio_id: {
+            'component':    'EmergencyFundAIO',
+            'subcomponent': 'runway_chart',
+            'aio_id':       aio_id
+        }
+        amt_chart = lambda aio_id: {
+            'component':    'EmergencyFundAIO',
+            'subcomponent': 'amt_chart',
+            'aio_id':       aio_id
+        }
         sources_pie_chart = lambda aio_id: {
             'component':    'EmergencyFundAIO',
             'subcomponent': 'sources_pie_chart',
-            'aio_id':       aio_id
-        }
-        goal_bullet_chart = lambda aio_id: {
-            'component':    'EmergencyFundAIO',
-            'subcomponent': 'goal_bullet_chart',
             'aio_id':       aio_id
         }
 
@@ -212,8 +217,10 @@ class EmergencyFundAIO(html.Div):
             self,
             title: str,
             df: pd.DataFrame,
-            goal: float,
-            actual: float,
+            runway_mos_goal: float,
+            runway_mos_actual: float,
+            amt_goal: float,
+            amt_actual: float,
             aio_id=None
     ):
         """An All-in-One component pie chart for ticker allocation"""
@@ -229,17 +236,29 @@ class EmergencyFundAIO(html.Div):
             # the PMC `MATCH` pattern..
             aio_id = str(uuid.uuid4())
 
-        goal_chart = go.Figure(go.Indicator(
+        runway_chart = go.Figure(go.Indicator(
             mode="number+gauge+delta",
-            value=actual,
+            value=runway_mos_actual,
             domain={'x': [0.1, 1], 'y': [0, 1]},
-            title={'text': "<b>Goal</b>"},
-            delta={'reference': goal},
+            title={'text': "<b>Runway</b>"},
+            delta={'reference': runway_mos_goal},
             gauge={
-                'shape':     "bullet",
-                'axis':      {'range': [None, goal]},
+                'shape': "bullet",
+                'axis':  {'range': [None, runway_mos_goal]},
             }))
-        goal_chart.update_layout(height=250)
+        runway_chart.update_layout(height=150, margin={'t': 0, 'b': 50})
+
+        amt_chart = go.Figure(go.Indicator(
+            mode="number+gauge+delta",
+            value=amt_actual,  # TODO use real values
+            domain={'x': [0.1, 1], 'y': [0, 1]},
+            title={'text': "<b>Amount</b>"},
+            delta={'reference': amt_goal},
+            gauge={
+                'shape': "bullet",
+                'axis':  {'range': [None, amt_goal]},
+            }))
+        amt_chart.update_layout(height=150, margin={'t': 0, 'b': 50})
 
         pie_fig = go.Figure(
             data=[
@@ -247,10 +266,14 @@ class EmergencyFundAIO(html.Div):
             ]
         )
         pie_fig.update_traces(textposition='inside', textinfo='percent+label')
-        pie_fig.update_layout(title={'text': 'Fund Sources'}, height=800, uniformtext_minsize=10, uniformtext_mode='hide')
+        pie_fig.update_layout(title={'text': 'Fund Sources'},
+                              height=500,
+                              uniformtext_minsize=10,
+                              uniformtext_mode='hide')
 
         super().__init__([  # Equivalent to `html.Div([...])`
             html.H1(children=title),
-            dcc.Graph(id=self.ids.goal_bullet_chart(aio_id), figure=goal_chart),
+            dcc.Graph(id=self.ids.runway_chart(aio_id), figure=runway_chart),
+            dcc.Graph(id=self.ids.amt_chart(aio_id), figure=amt_chart),
             dcc.Graph(id=self.ids.sources_pie_chart(aio_id), figure=pie_fig),
         ])

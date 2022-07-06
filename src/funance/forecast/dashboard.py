@@ -40,6 +40,9 @@ def get_charts(spec):
             charts.append(EmergencyFundAIO(
                 title=chart['title'],
                 df=ef_report['df'],
-                actual=ef_report['actual'],
-                goal=ef_report['goal']))
+                runway_mos_goal=ef_report['runway_mos_goal'],
+                runway_mos_actual=ef_report['runway_mos_actual'],
+                amt_goal=ef_report['amt_goal'],
+                amt_actual=ef_report['amt_actual']
+            ))
     return charts
