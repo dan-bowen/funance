@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from funance.dashboard.components import ForecastLineAIO, EmergencyFundAIO
 from .datespec import DATE_FORMAT
-from .projector import Projector
+from .forecast import Forecast
 from .emergency_fund import get_runway_report
 
 
@@ -17,7 +17,7 @@ def get_charts(spec):
     # forecast charts
     start_date = date.today() + relativedelta(days=1)
     end_date = start_date + relativedelta(years=1)
-    projector = Projector.from_spec(forecast_spec,
+    forecast = Forecast.from_spec(forecast_spec,
                                     start_date.strftime(DATE_FORMAT),
                                     end_date.strftime(DATE_FORMAT))
 
@@ -29,8 +29,8 @@ def get_charts(spec):
             accounts = list(
                 map(
                     lambda a: dict(
-                        name=projector.get_account(a).name,
-                        df=projector.get_account(a).get_running_balance_grouped()
+                        name=forecast.get_account(a).name,
+                        df=forecast.get_account(a).get_running_balance_grouped()
                     ),
                     chart['account_ids']
                 )
