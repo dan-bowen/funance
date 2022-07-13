@@ -250,7 +250,7 @@ class EmergencyFundAIO(html.Div):
 
         amt_chart = go.Figure(go.Indicator(
             mode="number+gauge+delta",
-            value=amt_actual,  # TODO use real values
+            value=amt_actual,
             domain={'x': [0.1, 1], 'y': [0, 1]},
             title={'text': "<b>Amount</b>"},
             delta={'reference': amt_goal},
