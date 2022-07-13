@@ -19,7 +19,6 @@ def get_forecast_charts(spec: dict) -> List[Union[ForecastLineAIO, EmergencyFund
     chart_spec = spec['charts']
     charts = []
 
-    # forecast charts
     start_date = date.today() + relativedelta(days=1)
     end_date = start_date + relativedelta(years=1)
     forecast = Forecast.from_spec(forecast_spec,
