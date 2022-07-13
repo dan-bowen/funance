@@ -13,7 +13,7 @@ ENV_DIST_FILE = os.path.join(ROOT_DIR, '.env.dist')
 ENV_FILE = os.path.join(PROJECT_DIR, '.env')
 
 SPEC_DIST_FILE = os.path.join(ROOT_DIR, 'funance.dist.yml')
-SPEC_FILE = os.path.join(PROJECT_DIR, 'funance.yml')
+SPEC_FILE = os.path.join(PROJECT_DIR, os.getenv('SPEC_FILE'))
 
 SESSION_FILE = os.path.join(PROJECT_DIR, 'session.json')
 
