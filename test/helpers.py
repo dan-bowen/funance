@@ -20,7 +20,7 @@ class FixtureHelper:
     @classmethod
     def get_spec_fixture(cls):
         root_path = get_root_path()
-        with open(f"{root_path}/forecast.dist.yml", "r") as stream:
+        with open(f"{root_path}/funance.dist.yml", "r") as stream:
             return yaml.safe_load(stream)
 
     @classmethod

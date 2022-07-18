@@ -6,10 +6,8 @@ from funance.common.paths import (
     PROJECT_DIR,
     CHROMEDRIVER_DIR,
     EXPORT_DIR,
-    FORECAST_DIST_FILE,
-    FORECAST_FILE,
-    INVEST_DIST_FILE,
-    INVEST_FILE,
+    SPEC_DIST_FILE,
+    SPEC_FILE,
     ENV_DIST_FILE,
     ENV_FILE
 )
@@ -38,14 +36,9 @@ def init():
         shutil.copyfile(ENV_DIST_FILE, ENV_FILE)
         click.echo(f"copied env file {ENV_FILE}")
 
-    # copy forecast file, if it doesn't exist
-    if not Path(FORECAST_FILE).is_file():
-        shutil.copyfile(FORECAST_DIST_FILE, FORECAST_FILE)
-        click.echo(f"copied forecast file {FORECAST_FILE}")
-
-    # copy invest file, if it doesn't exist
-    if not Path(INVEST_FILE).is_file():
-        shutil.copyfile(INVEST_DIST_FILE, INVEST_FILE)
-        click.echo(f"copied invest file {INVEST_FILE}")
+    # copy spec file, if it doesn't exist
+    if not Path(SPEC_FILE).is_file():
+        shutil.copyfile(SPEC_DIST_FILE, SPEC_FILE)
+        click.echo(f"copied funance file {SPEC_FILE}")
 
     do_update()

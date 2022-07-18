@@ -8,7 +8,7 @@ from parameterized import parameterized
 from funance.forecast.account import Account
 from funance.forecast.datespec import DateSpec
 from funance.forecast.exceptions import OutOfBoundsException
-from funance.forecast.projector import Projector
+from funance.forecast.forecast import Forecast
 from funance.forecast.transaction import Transaction
 from test.helpers import FixtureHelper
 
@@ -277,8 +277,8 @@ class TestForecast(unittest.TestCase):
 
     def test_checking_transactions(self):
         spec = FixtureHelper.get_spec_fixture()
-        projector = Projector.from_spec(spec, '2022-01-01', '2022-12-31')
-        df = projector.get_account('checking').get_transactions_df()
+        forecast = Forecast.from_spec(spec['forecast'], '2022-01-01', '2022-12-31')
+        df = forecast.get_account('checking').get_transactions_df()
 
         # Spot-check some rows
         mask = ((df['date'] >= '2022-02-01') & (df['date'] <= '2022-03-01'))
@@ -357,8 +357,8 @@ class TestForecast(unittest.TestCase):
 
     def test_cc_transactions(self):
         spec = FixtureHelper.get_spec_fixture()
-        projector = Projector.from_spec(spec, '2022-01-01', '2022-12-31')
-        df = projector.get_account('credit_card').get_transactions_df()
+        forecast = Forecast.from_spec(spec['forecast'], '2022-01-01', '2022-12-31')
+        df = forecast.get_account('credit_card').get_transactions_df()
 
         # Spot-check some rows
         mask = ((df['date'] >= '2022-02-01') & (df['date'] <= '2022-03-01'))
