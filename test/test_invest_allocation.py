@@ -4,15 +4,15 @@ from unittest.mock import patch
 import numpy as np
 from parameterized import parameterized
 
-from funance.invest.cost_basis import get_allocation_report, PriceNotFoundError
+from funance.invest.cost_basis import CostBasis, PriceNotFoundError
 from test.helpers import FixtureHelper
 
 
 class TestAllocation(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.get_cost_basis_df = patch('funance.invest.cost_basis._get_cost_basis_df').start()
-        self.get_ticker_prices = patch('funance.invest.cost_basis._get_ticker_prices').start()
+        self.get_cost_basis_df = patch('funance.invest.cost_basis.CostBasis.df_cost_basis').start()
+        self.get_ticker_prices = patch('funance.invest.cost_basis.CostBasis._get_ticker_prices').start()
 
     def tearDown(self) -> None:
         patch.stopall()
@@ -112,11 +112,11 @@ class TestAllocation(unittest.TestCase):
 
         for assertion in assertions:
             if assertion == 'array_equal':
-                actual = get_allocation_report()
+                actual = CostBasis('foo').df_allocation()
                 np.testing.assert_array_equal(actual.to_numpy(), expected.to_numpy())
             if assertion == 'raises_price_not_found_error':
                 with self.assertRaises(PriceNotFoundError) as context:
-                    actual = get_allocation_report()
+                    actual = CostBasis('foo').df_allocation()
                 self.assertIn('Found nulls in current_price column', str(context.exception))
 
 
