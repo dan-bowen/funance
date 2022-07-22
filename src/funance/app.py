@@ -4,6 +4,7 @@ import os
 import typing as t
 from datetime import date
 from pathlib import Path
+import shutil
 
 import yaml
 from dash import Dash, html
@@ -11,6 +12,7 @@ from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 
 from funance.common.logger import get_logger
+from funance.scrape.driver.updater import Updater
 from funance.dashboard.components import ForecastLineAIO, EmergencyFundAIO, TickerAllocationAIO
 from funance.forecast.datespec import DATE_FORMAT
 from funance.forecast.forecast import Forecast
@@ -25,9 +27,6 @@ class Funance:
 
     Once created it will act as a central registry for configuration, dataframes and more.
     """
-    config_class = Config
-
-    cost_basis_class = CostBasis
 
     # Default configuration parameters.
     default_config = {}
@@ -52,19 +51,18 @@ class Funance:
         self._spec_dist_file = os.path.join(self._root_dir, 'funance.dist.yml')
 
         # scraper dirs
-        self._session_file = os.path.join(self._project_dir, 'session.json')
         self._chromedriver_dir = os.path.join(self._project_dir, 'chromedriver')
         self._export_dir = os.path.join(self._project_dir, 'export')
 
         # The configuration dictionary as :class:`Config`
-        self.config: Config = self.make_config()
+        self.config: Config = self._make_config()
         self.spec = self._get_spec()
 
-    def make_config(self) -> Config:
+    def _make_config(self) -> Config:
         """Used to create the config attribute by the Funance constructor.
         """
         defaults = dict(self.default_config)
-        return self.config_class(defaults)
+        return Config(defaults)
 
     def _get_spec(self) -> dict:
         """Get the spec file"""
@@ -118,7 +116,7 @@ class Funance:
         """get invest charts"""
         invest_spec = self.spec['invest']  # not used, yet
         charts = self.spec['charts']
-        allocation_df = self.cost_basis_class(self._export_dir).df_allocation()
+        allocation_df = CostBasis(self._export_dir).df_allocation()
 
         # allocation charts
         charts = [
@@ -126,6 +124,30 @@ class Funance:
             for chart in charts if chart['type'] == 'stock-allocation'
         ]
         return charts
+
+    def init(self):
+        """Initialize the project"""
+        # create project directory
+        Path(self._project_dir).mkdir(parents=True, exist_ok=True)
+        logger.info(f"created directory {self._project_dir}")
+
+        Path(self._chromedriver_dir).mkdir(parents=True, exist_ok=True)
+        logger.info(f"created directory {self._chromedriver_dir}")
+
+        Path(self._export_dir).mkdir(parents=True, exist_ok=True)
+        logger.info(f"created directory {self._export_dir}")
+
+        # copy .env file, if it doesn't exist
+        if not Path(self._env_file).is_file():
+            shutil.copyfile(self._env_dist_file, self._env_file)
+            logger.info(f"copied env file {self._env_file}")
+
+        # copy spec file, if it doesn't exist
+        if not Path(self._spec_file).is_file():
+            shutil.copyfile(SPEC_DIST_FILE, self._spec_file)
+            logger.info(f"copied funance file {self._spec_file}")
+
+        Updater(self._chromedriver_dir).update()
 
     def run(self):
         """Run the dash app"""

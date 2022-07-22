@@ -4,8 +4,7 @@ import time
 import click
 from selenium.common.exceptions import WebDriverException
 
-from funance.scrape.driver import create_driver
-from funance.scrape.driver.updater import do_update
+# from funance.scrape.driver import create_driver
 
 
 @click.command(
@@ -39,12 +38,3 @@ def service(command):
                 except (WebDriverException, KeyboardInterrupt) as e:
                     driver.quit()
                     raise e
-
-
-@click.command(
-    short_help='Update Chromedriver'
-)
-def update():
-    """Update Chromedriver version to match locally installed Chrome version"""
-
-    do_update()
