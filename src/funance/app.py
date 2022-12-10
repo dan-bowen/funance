@@ -12,7 +12,6 @@ from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 
 from funance.common.logger import get_logger
-from funance.scrape.driver.updater import Updater
 from funance.dashboard.components import ForecastLineAIO, EmergencyFundAIO, TickerAllocationAIO
 from funance.forecast.datespec import DATE_FORMAT
 from funance.forecast.forecast import Forecast
@@ -50,8 +49,7 @@ class Funance:
         self._env_dist_file = os.path.join(self._root_dir, '.env.dist')
         self._spec_dist_file = os.path.join(self._root_dir, 'funance.dist.yml')
 
-        # scraper dirs
-        self._chromedriver_dir = os.path.join(self._project_dir, 'chromedriver')
+        # export dirs
         self._export_dir = os.path.join(self._project_dir, 'export')
 
         # The configuration dictionary as :class:`Config`
@@ -131,9 +129,6 @@ class Funance:
         Path(self._project_dir).mkdir(parents=True, exist_ok=True)
         logger.info(f"created directory {self._project_dir}")
 
-        Path(self._chromedriver_dir).mkdir(parents=True, exist_ok=True)
-        logger.info(f"created directory {self._chromedriver_dir}")
-
         Path(self._export_dir).mkdir(parents=True, exist_ok=True)
         logger.info(f"created directory {self._export_dir}")
 
@@ -147,13 +142,9 @@ class Funance:
             shutil.copyfile(SPEC_DIST_FILE, self._spec_file)
             logger.info(f"copied funance file {self._spec_file}")
 
-        Updater(self._chromedriver_dir).update()
-
     def run(self):
         """Run the dash app"""
-        forecast_charts = self._get_forecast_charts()
-        invest_charts = self._get_invest_charts()
-        charts = forecast_charts + invest_charts
+        charts = self._get_forecast_charts()
 
         app = Dash(__name__)
         children = []
