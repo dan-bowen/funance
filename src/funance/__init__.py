@@ -1,12 +1,16 @@
-import os
-from dotenv import load_dotenv
-from pathlib import Path
+"""The application factory"""
+
+from .app import Funance
 
 
-_this_dir = Path(__file__).parent.absolute()
-ROOT_DIR = _this_dir.parent.parent.absolute()
-HOME_DIR = str(Path.home())
-PROJECT_DIR = os.path.join(HOME_DIR, '.funance')
-ENV_FILE = os.path.join(PROJECT_DIR, '.env')
+def create_app():
+    """Application factory"""
+    app_ = Funance()
 
-load_dotenv(dotenv_path=Path(ENV_FILE))
+    # set configuration
+    # app_.config.from_mapping(
+    #     FOO='bar'
+    # )
+    # app_.config.from_pyfile('my_config.py', silent=True)
+
+    return app_
