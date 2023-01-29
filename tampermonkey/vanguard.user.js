@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         Funance: Vanguard Holdings
 // @namespace    https://www.danbuilds.us
-// @version      0.1
+// @version      1.0
 // @description  Download holdings from your Vanguard account.
 // @author       Dan Bowen
 // @match        https://holdings.web.vanguard.com/
 // @grant        none
 // @require      https://code.jquery.com/jquery-3.6.1.slim.min.js
 // ==/UserScript==
+
+'use strict';
 
 // downloaded filename
 const FILENAME = 'holdings.vanguard.csv'
@@ -28,8 +30,8 @@ const ACCOUNT_HOLDINGS_SELECTOR = "table.holdings-table";
 // holds account holdings groups
 const ACCOUNT_HOLDINGS_GROUPS_SELECTOR = "tbody[app-holdings-table-body-grouping]"
 
+    // Start the script
     ; (function () {
-        'use strict';
         // When the page loads
         $(document).ready(function () {
             // wait until the main holdings are loaded
