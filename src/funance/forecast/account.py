@@ -70,6 +70,7 @@ class Account:
             raise OutOfBoundsException(f'date {target_date} before start_date of the account: {account_start}')
         if len(df.index) == 0:
             return self.balance
+        # slice everything after the target date
         sub_df = df[df.index.to_pydatetime() <= target_date]
         if len(sub_df.index) == 0:
             return self.balance
