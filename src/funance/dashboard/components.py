@@ -63,8 +63,8 @@ class TickerAllocationAIO(html.Div):  # html.Div will be the "parent" component
             dcc.Store(data=store, id=self.ids.store(aio_id)),
             html.H1(children=title),
             dcc.Dropdown(id=self.ids.dropdown(aio_id), multi=True,
-                         options=[{'label': a, 'value': a} for a in df.account_name.unique()],
-                         value=[a for a in df.account_name.unique()]),
+                         options=[{'label': a, 'value': a} for a in df.account.unique()],
+                         value=[a for a in df.account.unique()]),
             dcc.Graph(id=self.ids.pie_chart(aio_id), figure={}),
         ])
 
@@ -78,10 +78,10 @@ class TickerAllocationAIO(html.Div):  # html.Div will be the "parent" component
     def get_figure(account_names, store):
         logger.debug('callback received: account_names=%s', account_names)
         df = RedisStore.load(store['df'])
-        df = df.loc[df['account_name'].isin(account_names)]
+        df = df.loc[df['account'].isin(account_names)]
         pie_fig = go.Figure(
             data=[
-                go.Pie(labels=df['ticker'], values=df['current_value'])
+                go.Pie(labels=df['symbol'], values=df['current_value'])
             ]
         )
         pie_fig.update_traces(textposition='inside', textinfo='percent+label')

@@ -49,14 +49,11 @@ class DynamicTransaction(Transaction):
         last_month = self.date + drel(months=-1)
         close_date = last_month + drel(day=account.stmt_close_dom)
         is_pmt_plan = account.pmt_plan is not None
+
         if amount.index == 0:
-            if is_pmt_plan:
-                balance = account.pmt_plan['interest_saving_balance']
-            else:
-                balance = account.stmt_balance
+            balance = account.stmt_balance
         else:
             if is_pmt_plan:
-                # determine interest saving balance
                 main_balance = account.get_balance(close_date.strftime(DATE_FORMAT))
                 ref_acct = accounts.get_account(account.pmt_plan['ref_account_id'])
                 ref_balance = ref_acct.get_balance(close_date.strftime(DATE_FORMAT))

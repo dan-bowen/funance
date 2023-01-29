@@ -15,7 +15,7 @@ from funance.common.logger import get_logger
 from funance.dashboard.components import ForecastLineAIO, EmergencyFundAIO, TickerAllocationAIO
 from funance.forecast.datespec import DATE_FORMAT
 from funance.forecast.forecast import Forecast
-from funance.invest import CostBasis
+from funance.invest import Holdings
 from .config import Config
 
 logger = get_logger('app')
@@ -114,7 +114,7 @@ class Funance:
         """get invest charts"""
         invest_spec = self.spec['invest']  # not used, yet
         charts = self.spec['charts']
-        allocation_df = CostBasis(self._export_dir).df_allocation()
+        allocation_df = Holdings(self._export_dir).df_allocation()
 
         # allocation charts
         charts = [
@@ -144,7 +144,7 @@ class Funance:
 
     def run(self):
         """Run the dash app"""
-        charts = self._get_forecast_charts()
+        charts = self._get_forecast_charts() + self._get_invest_charts()
 
         app = Dash(__name__)
         children = []

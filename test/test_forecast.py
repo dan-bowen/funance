@@ -290,7 +290,7 @@ class TestForecast(unittest.TestCase):
                     {
                         'account_id': 'checking',
                         'date':       datetime.datetime(2022, 2, 1, 0, 0, 0),
-                        'amount':     -772.85,
+                        'amount':     -149.82999999999993,
                         'name':       'Credit Card Pmt'
                     },
                     {
@@ -338,7 +338,7 @@ class TestForecast(unittest.TestCase):
                     {
                         'account_id': 'checking',
                         'date':       datetime.datetime(2022, 3, 1, 0, 0, 0),
-                        'amount':     -145.70000000000005,
+                        'amount':     -1100.3400000000001,
                         'name':       'Credit Card Pmt'
                     },
                     {
@@ -370,7 +370,7 @@ class TestForecast(unittest.TestCase):
                     {
                         'account_id': 'credit_card',
                         'date':       datetime.datetime(2022, 2, 1, 0, 0, 0),
-                        'amount':     772.85,
+                        'amount':     149.82999999999993,
                         'name':       'Credit Card Pmt'
                     },
                     {
@@ -394,7 +394,7 @@ class TestForecast(unittest.TestCase):
                     {
                         'account_id': 'credit_card',
                         'date':       datetime.datetime(2022, 3, 1, 0, 0, 0),
-                        'amount':     145.70000000000005,
+                        'amount':     1100.3400000000001,
                         'name':       'Credit Card Pmt'
                     },
                 ]

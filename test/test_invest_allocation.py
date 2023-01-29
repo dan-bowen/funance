@@ -4,15 +4,15 @@ from unittest.mock import patch
 import numpy as np
 from parameterized import parameterized
 
-from funance.invest.cost_basis import CostBasis, PriceNotFoundError
+from funance.invest.holdings import Holdings, PriceNotFoundError
 from test.helpers import FixtureHelper
 
 
 class TestAllocation(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.get_cost_basis_df = patch('funance.invest.cost_basis.CostBasis.df_cost_basis').start()
-        self.get_ticker_prices = patch('funance.invest.cost_basis.CostBasis._get_ticker_prices').start()
+        self.get_holdings_df = patch('funance.invest.holdings.Holdings.df_holdings').start()
+        self.get_symbol_prices = patch('funance.invest.holdings.Holdings._get_symbol_prices').start()
 
     def tearDown(self) -> None:
         patch.stopall()
@@ -21,20 +21,12 @@ class TestAllocation(unittest.TestCase):
         (
                 "all_unique_prices",
                 {
-                    'ED':     86.88,
-                    'CVX':    173.76,
-                    'MA':     302.72,
-                    'VIPSX':  59.00,
                     'VTIP':   50.22,
+                    'VGLT':   66.75,
                     'VXUS':   51.43,
                     'VYM':    99.20,
-                    'MGV':    93.26,
                     'VIG':    138.64,
-                    'GLD':    171.15,
-                    'V':      190.01,
-                    'JPM':    113.03,
-                    'BAC':    31.92,
-                    'STOR':   25.52,
+                    'VGSH':   58.22,
                     'X_CASH': 1.00
                 },
                 [
@@ -46,14 +38,12 @@ class TestAllocation(unittest.TestCase):
                 # Prices in the fixture are not found. See "all_unique_prices" test for master list
                 "missing_prices",
                 {
-                    'ED':     86.88,
-                    'CVX':    173.76,
-                    'MA':     302.72,
-                    'GLD':    171.15,
-                    'V':      190.01,
-                    'JPM':    113.03,
-                    'BAC':    31.92,
-                    'STOR':   25.52,
+                    # 'VTIP':   50.22,
+                    'VGLT':   66.75,
+                    'VXUS':   51.43,
+                    'VYM':    99.20,
+                    'VIG':    138.64,
+                    'VGSH':   58.22,
                     'X_CASH': 1.00
                 },
                 [
@@ -67,20 +57,12 @@ class TestAllocation(unittest.TestCase):
                     'AAPL':   104.15,
 
                     # in the fixture
-                    'ED':     86.88,
-                    'CVX':    173.76,
-                    'MA':     302.72,
-                    'VIPSX':  59.00,
                     'VTIP':   50.22,
+                    'VGLT':   66.75,
                     'VXUS':   51.43,
                     'VYM':    99.20,
-                    'MGV':    93.26,
                     'VIG':    138.64,
-                    'GLD':    171.15,
-                    'V':      190.01,
-                    'JPM':    113.03,
-                    'BAC':    31.92,
-                    'STOR':   25.52,
+                    'VGSH':   58.22,
                     'X_CASH': 1.00
                 },
                 [
@@ -88,35 +70,33 @@ class TestAllocation(unittest.TestCase):
                 ]
         ),
     ])
-    def test_summary_cost_basis(self, name, prices, assertions):
-        fixture = FixtureHelper.get_dataframe('brokerage.csv')
+    def test_summary_holdings(self, name, prices, assertions):
+        fixture = FixtureHelper.get_dataframe('invest.holdings.csv')
 
-        self.get_cost_basis_df.configure_mock(**{
+        self.get_holdings_df.configure_mock(**{
             'return_value': fixture
         })
-        self.get_ticker_prices.configure_mock(**{
+        self.get_symbol_prices.configure_mock(**{
             'return_value': prices
         })
 
         expected = fixture.copy() \
-            .drop(columns=['date_acquired', 'cost_per_share', 'term']) \
-            .groupby(['account_name', 'ticker']) \
-            .agg({'num_shares': 'sum', 'total_cost': 'sum'}) \
+            .groupby(['account', 'symbol']) \
+            .agg({'quantity': 'sum'}) \
             .reset_index()
-        expected['current_price'] = expected['ticker'].map(prices)
-        expected['current_value'] = expected['current_price'] * expected['num_shares']
-        expected['gain'] = expected['current_value'] - expected['total_cost']
-        expected['gain_pct'] = ((expected['current_value'] - expected['total_cost']) / expected['total_cost']) * 100
-        expected['allocation'] = (expected['current_value'] / expected.groupby('account_name')['current_value']
+
+        expected['current_price'] = expected['symbol'].map(prices)
+        expected['current_value'] = expected['current_price'] * expected['quantity']
+        expected['allocation'] = (expected['current_value'] / expected.groupby('account')['current_value']
                                   .transform('sum')) * 100
 
         for assertion in assertions:
             if assertion == 'array_equal':
-                actual = CostBasis('foo').df_allocation()
+                actual = Holdings('foo').df_allocation()
                 np.testing.assert_array_equal(actual.to_numpy(), expected.to_numpy())
             if assertion == 'raises_price_not_found_error':
                 with self.assertRaises(PriceNotFoundError) as context:
-                    actual = CostBasis('foo').df_allocation()
+                    actual = Holdings('foo').df_allocation()
                 self.assertIn('Found nulls in current_price column', str(context.exception))
 
 

@@ -1,12 +1,13 @@
 """Cost basis"""
 
 import os
+import glob
 
 import pandas as pd
 
 from funance.common.logger import get_logger
 
-logger = get_logger('cost-basis')
+logger = get_logger('holdings')
 
 
 class PriceNotFoundError(Exception):
@@ -14,15 +15,15 @@ class PriceNotFoundError(Exception):
     pass
 
 
-class CostBasis:
-    """Cost Basis"""
+class Holdings:
+    """Holdings"""
 
     def __init__(self, export_dir: str) -> None:
         self._export_dir = export_dir
 
     @classmethod
-    def _get_ticker_prices(cls, tickers: list) -> dict:
-        """get prices for the given tickers"""
+    def _get_symbol_prices(cls, tickers: list) -> dict:
+        """get prices for the given symbols"""
 
         filled = dict.fromkeys(tickers, None)
         # TODO get this from config
@@ -38,32 +39,32 @@ class CostBasis:
     @classmethod
     def validate_allocation_df(cls, summary_df: pd.DataFrame) -> None:
         """Validate allocation df"""
+        logger.info(summary_df)
         if summary_df['current_price'].isnull().values.any():
             raise PriceNotFoundError('Found nulls in current_price column')
 
-    def df_cost_basis(self) -> pd.DataFrame:
-        """Cost basis dataframe"""
-        return pd.read_csv(os.path.join(self._export_dir, 'brokerage.csv'))
+    def df_holdings(self) -> pd.DataFrame:
+        """Holdings dataframe"""
+        # Merges all CSVs with the pattern "holdings.*.csv" into one dataframe.
+        all_files = glob.glob(os.path.join(self._export_dir, "holdings.*.csv"))
+        df = pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
+        return df
 
     def df_allocation(self) -> pd.DataFrame:
         """Allocation dataframe"""
-        cost_basis_df = self.df_cost_basis()
-        summary_df = cost_basis_df.copy() \
-            .drop(columns=['date_acquired', 'cost_per_share', 'term']) \
-            .groupby(['account_name', 'ticker']) \
-            .agg({'num_shares': 'sum', 'total_cost': 'sum'}) \
+        holdings_df = self.df_holdings()
+        summary_df = holdings_df.copy() \
+            .groupby(['account', 'symbol']) \
+            .agg({'quantity': 'sum'}) \
             .reset_index()
 
-        unique_tickers = summary_df['ticker'].unique()
-        ticker_prices = self._get_ticker_prices(unique_tickers)
+        unique_symbols = summary_df['symbol'].unique()
+        symbol_prices = self._get_symbol_prices(unique_symbols)
 
-        summary_df['current_price'] = summary_df['ticker'].map(ticker_prices)
-
-        summary_df['current_value'] = summary_df['current_price'] * summary_df['num_shares']
-        summary_df['gain'] = summary_df['current_value'] - summary_df['total_cost']
-        summary_df['gain_pct'] = ((summary_df['current_value'] - summary_df['total_cost']) / summary_df['total_cost']) * 100
-        summary_df['allocation'] = (summary_df['current_value'] / summary_df.groupby('account_name')['current_value']
+        summary_df['current_price'] = summary_df['symbol'].map(symbol_prices)
+        summary_df['current_value'] = summary_df['current_price'] * summary_df['quantity']
+        summary_df['allocation'] = (summary_df['current_value'] / summary_df.groupby('account')['current_value']
                                     .transform('sum')) * 100
 
-        CostBasis.validate_allocation_df(summary_df)
+        Holdings.validate_allocation_df(summary_df)
         return summary_df

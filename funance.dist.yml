@@ -87,7 +87,6 @@ forecast:
       stmt_balance: -300.15 # float: current statement balance (for cc type only)
       stmt_close_dom: 4     # int: Statement closing day of month (for cc type only)
       pmt_plan: # dict|null: Indicates a payment plan(s) within this card
-        interest_saving_balance: -923.17 # float: Interest saving balance
         ref_account_id: cc_plans         # string: reference to the account_id with payment plan balances
       scheduled_transactions:
         groc:
