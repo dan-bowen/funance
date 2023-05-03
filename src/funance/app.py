@@ -2,7 +2,7 @@
 
 import os
 import typing as t
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 import shutil
 
@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 
 from funance.common.logger import get_logger
 from funance.dashboard.components import ForecastLineAIO, EmergencyFundAIO, TickerAllocationAIO
-from funance.forecast.datespec import DATE_FORMAT
 from funance.forecast.forecast import Forecast
 from funance.invest import Holdings
 from .config import Config
@@ -78,11 +77,16 @@ class Funance:
         chart_spec = self.spec['charts']
         charts = []
 
-        start_date = date.today() + relativedelta(days=1)
+        now = datetime.now()
+        today = datetime(now.year, now.month, now.day, 0, 0, 0, 0)
+        # start_date of today+1 assumes that all of today's transactions are already
+        # reflected in the current balance. Only transactions starting tomorrow will
+        # be generated.
+        start_date = today + relativedelta(days=1)
         end_date = start_date + relativedelta(years=1)
         forecast = Forecast.from_spec(forecast_spec,
-                                      start_date.strftime(DATE_FORMAT),
-                                      end_date.strftime(DATE_FORMAT))
+                                      start_date,
+                                      end_date)
 
         # emergency fund
         ef_report = Forecast.get_runway_report(ef_spec)

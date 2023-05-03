@@ -1,3 +1,6 @@
+from __future__ import annotations
+from datetime import datetime
+
 import attr
 import pandas as pd
 
@@ -8,13 +11,13 @@ from .transaction import ScheduledTransactions
 @attr.define(kw_only=True)
 class Forecast:
     spec: dict = attr.ib(factory=dict)
-    start_date: str = attr.ib(factory=str)
-    end_date: str = attr.ib(factory=str)
+    start_date: datetime = attr.ib()
+    end_date: datetime = attr.ib()
     accounts: Accounts = attr.ib()
 
     @classmethod
-    def from_spec(cls, spec, start_date, end_date):
-        accounts = Accounts.from_spec(spec, start_date, end_date)
+    def from_spec(cls, spec, start_date: datetime, end_date: datetime) -> Forecast:
+        accounts = Accounts.from_spec(spec, start_date)
         accounts.apply_scheduled_transactions(ScheduledTransactions.from_spec(spec, start_date, end_date))
         return Forecast(spec=spec, start_date=start_date, end_date=end_date, accounts=accounts)
 

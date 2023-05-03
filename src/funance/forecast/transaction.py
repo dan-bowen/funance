@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from typing import Union, TYPE_CHECKING
+from datetime import datetime
+from typing import List, Union, TYPE_CHECKING
 
 import attr
 from dateutil.relativedelta import relativedelta as drel
 
-from .datespec import DateSpec, DATE_FORMAT
+from .datespec import DateSpec
+from funance.common.logger import get_logger
+
+logger = get_logger('transaction')
 
 if TYPE_CHECKING:
     from .account import Accounts
@@ -21,7 +25,7 @@ class Transfer:
 class Transaction:
     transaction_id: str = attr.ib()
     account_id: str = attr.ib()
-    date: str = attr.ib()
+    date: datetime = attr.ib()
     amount: float = attr.ib()
     name: str = attr.ib()
     type: str = attr.ib()
@@ -43,29 +47,55 @@ class DynamicTransaction(Transaction):
     amount: CCBalanceAmount = attr.ib()
     transfer: Union[Transfer, None] = attr.ib()
 
-    def exchange(self, accounts: Accounts):
+    def exchange(self, accounts: Accounts) -> List[Transaction]:
         amount = self.amount
         account = accounts.get_account(amount.account_id)
         last_month = self.date + drel(months=-1)
         close_date = last_month + drel(day=account.stmt_close_dom)
         is_pmt_plan = account.pmt_plan is not None
 
+        do_logging = is_pmt_plan
+
+        if do_logging:
+            logger.debug('--------------exchanging DynamicTransaction------------------')
+            logger.debug('%s', {
+                'amount':     amount,
+                'date':       self.date.strftime('%Y-%m-%d'),
+                # today+1
+                'last_month': last_month.strftime('%Y-%m-%d'),
+                'acct_start_date': account.start_date.strftime('%Y-%m-%d'),
+                # 'today': today,
+                'close_date': close_date.strftime('%Y-%m-%d')
+            })
+
         if amount.index == 0:
             balance = account.stmt_balance
         else:
             if is_pmt_plan:
-                main_balance = account.get_balance(close_date.strftime(DATE_FORMAT))
+                main_balance = account.get_balance(close_date)
                 ref_acct = accounts.get_account(account.pmt_plan['ref_account_id'])
-                ref_balance = ref_acct.get_balance(close_date.strftime(DATE_FORMAT))
+                ref_balance = ref_acct.get_balance(close_date)
                 balance = main_balance - ref_balance
+
+                logger.debug('%s', {
+                    'main_balance': main_balance,
+                    'ref_balance': ref_balance,
+                    'new_balance': balance,
+                })
             else:
-                balance = account.get_balance(close_date.strftime(DATE_FORMAT))
+                balance = account.get_balance(close_date)
 
         t = ScheduledTransaction.create_plain_transaction(transaction_id=self.transaction_id,
                                                           account_id=self.account_id,
-                                                          name=self.name, ttype=self.type, date=self.date,
+                                                          name=self.name,
+                                                          ttype=self.type,
+                                                          date=self.date,
                                                           amount=balance,
                                                           transfer=self.transfer)
+
+        # if do_logging:
+        #     logger.debug('%s', t)
+
         return t
 
 
@@ -75,7 +105,7 @@ class ScheduledTransactions:
     dynamic: list = attr.ib(factory=list)
 
     @classmethod
-    def from_spec(cls, spec, start_date, end_date):
+    def from_spec(cls, spec, start_date: datetime, end_date: datetime):
         transactions = []
         for account_id, account_spec in spec['accounts'].items():
             if account_spec['scheduled_transactions']:
@@ -106,15 +136,11 @@ class ScheduledTransaction:
                                   date_spec=DateSpec.from_spec(spec['date_spec']), transfer=transfer)
         return st
 
-    def generate_transactions(self, start_date, end_date):
+    def generate_transactions(self, start_date: datetime, end_date: datetime) -> list:
         """
         Generate transactions
 
         This process may generate transactions for any other account
-
-        :param start_date: str
-        :param end_date: str
-        :return: list
         """
         transactions = []
         dates = self.date_spec.generate_dates(start_date, end_date)
@@ -133,8 +159,8 @@ class ScheduledTransaction:
         return transactions
 
     @classmethod
-    def create_root_transaction(cls, *, index: int, transaction_id: str, account_id: str, name: str, ttype: str, date,
-                                amount: Union[float, dict], transfer: Union[Transfer, None]) -> list:
+    def create_root_transaction(cls, *, index: int, transaction_id: str, account_id: str, name: str, ttype: str,
+                                date: datetime, amount: Union[float, dict], transfer: Union[Transfer, None]) -> list:
         if type(amount) == dict:
             return cls.create_dynamic_transaction(index=index, transaction_id=transaction_id, account_id=account_id,
                                                   name=name, ttype=ttype, date=date, amount=amount, transfer=transfer)
@@ -142,8 +168,8 @@ class ScheduledTransaction:
                                             name=name, ttype=ttype, date=date, amount=amount, transfer=transfer)
 
     @classmethod
-    def create_plain_transaction(cls, *, transaction_id: str, account_id: str, name: str, ttype: str, date,
-                                 amount: float, transfer: Transfer) -> list:
+    def create_plain_transaction(cls, *, transaction_id: str, account_id: str, name: str, ttype: str, date: datetime,
+                                 amount: float, transfer: Transfer) -> List[Transaction]:
         if ttype == 'transfer':
             return cls.create_plain_transfer(transaction_id=transaction_id, account_id=account_id,
                                              name=name, ttype=ttype, date=date, amount=amount, transfer=transfer)
@@ -155,8 +181,8 @@ class ScheduledTransaction:
                                           name=name, ttype=ttype, date=date, amount=amount)
 
     @classmethod
-    def create_plain_transfer(cls, *, transaction_id: str, account_id: str, name: str, ttype: str, date, amount: float,
-                              transfer: Transfer) -> list:
+    def create_plain_transfer(cls, *, transaction_id: str, account_id: str, name: str, ttype: str, date: datetime,
+                              amount: float, transfer: Transfer) -> List[Transaction]:
         transactions = []
         # determine sending and receiving account
         if transfer.direction == 'to':
@@ -180,20 +206,20 @@ class ScheduledTransaction:
         return transactions
 
     @classmethod
-    def create_plain_credit(cls, *, transaction_id: str, account_id: str, name: str, ttype: str, date,
-                            amount: float) -> list:
+    def create_plain_credit(cls, *, transaction_id: str, account_id: str, name: str, ttype: str, date: datetime,
+                            amount: float) -> List[Transaction]:
         return [Transaction(transaction_id=transaction_id, type=ttype, account_id=account_id, date=date,
                             amount=abs(amount), name=name)]
 
     @classmethod
     def create_plain_debit(cls, *, transaction_id: str, account_id: str, name: str, ttype: str,
-                           date, amount: float) -> list:
+                           date: datetime, amount: float) -> List[Transaction]:
         return [Transaction(transaction_id=transaction_id, type=ttype, account_id=account_id, date=date,
                             amount=-abs(amount), name=name)]
 
     @classmethod
     def create_dynamic_transaction(cls, *, index: int, transaction_id: str, account_id: str, name: str, ttype: str,
-                                   date, amount: dict, transfer: Transfer) -> list:
+                                   date: datetime, amount: dict, transfer: Transfer) -> List[DynamicTransaction]:
         return [DynamicTransaction(transaction_id=transaction_id, type=ttype, account_id=account_id,
                                    date=date, amount=CCBalanceAmount.from_spec(amount, index), name=name,
                                    transfer=transfer)]

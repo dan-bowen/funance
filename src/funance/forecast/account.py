@@ -1,7 +1,7 @@
 from typing import Union
+from datetime import datetime
 
 import attr
-import dateutil.parser as dp
 import pandas as pd
 
 from .exceptions import InvalidAccountType, AccountNotFoundException, OutOfBoundsException
@@ -14,7 +14,7 @@ pd.options.mode.chained_assignment = None  # no warning message and no exception
 class Account:
     account_id: str = attr.ib()
     name: str = attr.ib()
-    start_date: str = attr.ib()
+    start_date: datetime = attr.ib()
     balance: float = attr.ib()
     transactions: list = attr.ib(factory=list)
     transactions_df: Union[pd.DataFrame, None] = attr.ib()
@@ -56,15 +56,12 @@ class Account:
             self.transactions_df = df
         return self.transactions_df
 
-    def get_balance(self, date):
+    def get_balance(self, date: datetime) -> float:
         """
         Get balance for a date
-
-        :param date: str
-        :return: float
         """
-        target_date = dp.parse(date)
-        account_start = dp.parse(self.start_date)
+        target_date = date
+        account_start = self.start_date
         df = self.get_running_balance_grouped()
         if target_date < account_start:
             raise OutOfBoundsException(f'date {target_date} before start_date of the account: {account_start}')
@@ -139,7 +136,7 @@ class Accounts:
     accounts: dict = attr.ib(factory=dict)
 
     @classmethod
-    def from_spec(cls, spec, start_date, end_date):
+    def from_spec(cls, spec, start_date: datetime):
         accounts = dict()
         for account_id, account_spec in spec['accounts'].items():
             account_spec['account_id'] = account_id

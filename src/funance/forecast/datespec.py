@@ -1,9 +1,9 @@
 from typing import Union
+from datetime import datetime
+
 import attr
 import dateutil.parser as dp
 import dateutil.rrule as dr
-
-DATE_FORMAT = '%Y-%m-%d'
 
 frequency_map = {
     'daily':   dr.DAILY,
@@ -25,7 +25,7 @@ weekday_map = {
 @attr.define(kw_only=True)
 class DateSpec:
     start_date: str = attr.ib()
-    end_date: str = attr.ib()
+    end_date: Union[str, None] = attr.ib()
     frequency: str = attr.ib()
     interval: int = attr.ib()
     day_of_week: Union[str, None] = attr.ib()
@@ -37,19 +37,14 @@ class DateSpec:
                         frequency=spec['frequency'], interval=spec['interval'],
                         day_of_week=spec['day_of_week'], day_of_month=spec['day_of_month'])
 
-    def generate_dates(self, start_date, end_date):
+    def generate_dates(self, start_date: datetime, end_date: datetime):
         """
         Generate dates according to spec. Filtered by start_date, end_date
-
-        :param start_date:
-        :param end_date:
-        :return:
         """
-        start_date = dp.parse(start_date)
-        end_date = dp.parse(end_date)
         rrule_start = dp.parse(self.start_date)
-        # Dates from spec could (more likely as time progresses) generate dates we don't care about.
-        # Here we set the max `until` argument for the rrule.
+
+        # Null end dates from spec could (more likely as time progresses) generate dates
+        # we don't care about. Here we set the max `until` argument for the rrule.
         if self.end_date is None:
             # self.end_date from the spec could be None to define infinite dates.
             # There has to be a limit, so substitute None with end_date argument.
@@ -81,6 +76,7 @@ class DateSpec:
             More accurate would be 2021-10-29
             """
             day_of_month = -1
+
         rr = dr.rrule(
             frequency_map.get(self.frequency),
             dtstart=rrule_start,
@@ -92,4 +88,5 @@ class DateSpec:
         dates = list(rr)
         # Filter start dates. End dates were limited in rrule
         dates = [d for d in dates if d >= start_date]
+
         return dates
