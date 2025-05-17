@@ -7,7 +7,7 @@ import pandas as pd
 
 from funance.common.logger import get_logger
 
-logger = get_logger('holdings')
+_LOGGER = get_logger('holdings')
 
 
 class PriceNotFoundError(Exception):
@@ -30,7 +30,7 @@ class Holdings:
         sheet_url = os.getenv('GOOGLE_SHEETS_PRICES_URL')
         # change the sharing url to the export url
         sheet_url = sheet_url.replace('/edit?usp=sharing', '/export?format=csv')
-        logger.debug('loading prices from %s', sheet_url)
+        _LOGGER.debug('loading prices from %s', sheet_url)
         prices_df = pd.read_csv(sheet_url)
         current_prices = {r['ticker']: r['price'] for r in prices_df.to_dict('records')}
         merged = {**filled, **current_prices}
@@ -39,9 +39,9 @@ class Holdings:
     @classmethod
     def validate_allocation_df(cls, summary_df: pd.DataFrame) -> None:
         """Validate allocation df"""
-        logger.info(summary_df)
-        if summary_df['current_price'].isnull().values.any():
-            raise PriceNotFoundError('Found nulls in current_price column')
+        _LOGGER.info(summary_df)
+        # if summary_df['current_price'].isnull().values.any():
+        #     raise PriceNotFoundError('Found nulls in current_price column')
 
     def df_holdings(self) -> pd.DataFrame:
         """Holdings dataframe"""

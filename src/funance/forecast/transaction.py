@@ -85,6 +85,9 @@ class DynamicTransaction(Transaction):
             else:
                 balance = account.get_balance(close_date)
 
+        if balance >= 0:
+            balance = 0
+
         t = ScheduledTransaction.create_plain_transaction(transaction_id=self.transaction_id,
                                                           account_id=self.account_id,
                                                           name=self.name,

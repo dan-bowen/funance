@@ -89,6 +89,28 @@ forecast:
       pmt_plan: # dict|null: Indicates a payment plan(s) within this card
         ref_account_id: cc_plans         # string: reference to the account_id with payment plan balances
       scheduled_transactions:
+#        Special type for generating a list of transactions for payment plans.
+#        glasses:
+#          name: 'PMT PLAN: GLASSES'
+
+#          type: pmt_plan
+           # new type
+
+#          start_date: '2022-06-05'
+           # principal transactions will start on this date +1 month.
+           # fees start on closing date of next month.
+
+#          principal_pmt: 112.63
+           # generate an expense transaction for principal
+
+#          monthly_fee: 2.15
+           # generate an expense transaction for monthly fee
+
+#          total_pmts: 12
+           # number of payments in the plan
+
+#          shadow_account: cc_plans
+           # generate "income" transactions (principal only) on this account to pay it down.
         groc:
           name: Groceries
           amount: 750

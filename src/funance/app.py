@@ -34,22 +34,21 @@ class Funance:
 
         # base paths
         self._root_dir = this_dir.parent.parent.absolute()
-        self._home_dir = str(Path.home())
-        self._project_dir = os.path.join(self._home_dir, '.funance')
-        self._env_file = os.path.join(self._project_dir, '.env')
+        self._project_dir = Path.cwd()
+        self._env_file = Path(self._project_dir / '.env')
 
         # load env file immediately after locating it so additional configuration will be able to utilize the env vars
         load_dotenv(dotenv_path=Path(self._env_file))
 
         # spec file; loaded from env var
-        self._spec_file = os.path.join(self._project_dir, os.getenv('SPEC_FILE'))
+        self._spec_file = Path(self._project_dir / os.getenv('SPEC_FILE'))
 
         # dist files
-        self._env_dist_file = os.path.join(self._root_dir, '.env.dist')
-        self._spec_dist_file = os.path.join(self._root_dir, 'funance.dist.yml')
+        self._env_dist_file = Path(self._root_dir / '.env.dist')
+        self._spec_dist_file = Path(self._root_dir / 'funance.dist.yml')
 
         # export dirs
-        self._export_dir = os.path.join(self._project_dir, 'export')
+        self._export_dir = Path(self._project_dir / 'export')
 
         # The configuration dictionary as :class:`Config`
         self.config: Config = self._make_config()

@@ -22,8 +22,10 @@ setup(
         'python-dateutil',
         'PyYAML',
         'python-dotenv',
-        'fakeredis==1.8.1',
-        'pyarrow==8.0.0'
+        'fakeredis',
+        'pyarrow',
+        'pdfplumber==0.10.3',
+        'pydantic>=2.0.0'
     ],
     extras_require={
         'dev': [
